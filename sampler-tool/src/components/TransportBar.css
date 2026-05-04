@@ -215,3 +215,87 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+.settings-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--bone-darker);
+  background: linear-gradient(180deg, var(--bone-light), var(--bone));
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 2px 4px rgba(60, 50, 30, 0.18);
+}
+
+.settings-btn:hover {
+  color: var(--te-orange);
+  border-color: var(--te-orange);
+}
+
+/* ===== Mobile: tight inline ===== */
+@media (max-width: 767px) {
+  .transport-bar.tight {
+    padding: 8px 12px;
+    gap: 8px;
+    height: 48px;
+  }
+
+  .transport-bar.tight .logo-section .logo-mark {
+    font-size: 20px;
+  }
+
+  .transport-bar.tight .logo-title {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+  }
+
+  .transport-bar.tight .controls-section {
+    gap: 8px;
+  }
+
+  .transport-bar.tight .transport-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .transport-bar.tight .bpm-control {
+    margin-left: 4px;
+    padding: 3px 8px;
+  }
+
+  .transport-bar.tight .bpm-control input {
+    width: 40px;
+    font-size: 16px;
+  }
+
+  .transport-bar.tight .bpm-control label {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+
+  .transport-bar.tight .status-section {
+    gap: 6px;
+  }
+
+  .transport-bar.tight .status-item {
+    padding: 3px 8px;
+  }
+
+  .transport-bar.tight .status-num {
+    font-size: 14px;
+  }
+
+  .transport-bar.tight .status-led {
+    padding: 4px 8px;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+}
