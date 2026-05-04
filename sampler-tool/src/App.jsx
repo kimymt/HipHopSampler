@@ -20,6 +20,7 @@ import { usePersistentStorage } from './hooks/usePersistentStorage';
 import { usePWA } from './hooks/usePWA';
 import { useAudioEngine } from './hooks/useAudioEngine';
 import { usePersistedSamples } from './hooks/usePersistedSamples';
+import { useMicRecorder } from './hooks/useMicRecorder';
 import { useSequencer } from './hooks/useSequencer';
 import { usePersistedState } from './hooks/usePersistence';
 import { useStorageQuota } from './hooks/useStorageQuota';
@@ -115,6 +116,41 @@ export default function App() {
     loadSample(padId, file);
     persist.maybeRequestOnce();
   };
+
+  const mic = useMicRecorder({
+    onRecorded: (padId, file) => {
+      initAudioContext();
+      setSelectedPadId(padId);
+      loadSample(padId, file);
+      persist.maybeRequestOnce();
+    },
+  });
+
+  const handleMicStart = (padId) => {
+    initAudioContext();
+    mic.startRecording(padId);
+  };
+
+  const micErrorMessage = useMemo(() => {
+    if (!mic.error) return null;
+    switch (mic.error) {
+      case 'permission-denied':
+        return 'マイクの利用が許可されませんでした。ブラウザの設定でこのサイトのマイクを許可してください。';
+      case 'no-device':
+        return 'マイクが見つかりませんでした。デバイスを確認してください。';
+      case 'unsupported':
+        return 'このブラウザはマイク録音に未対応です。';
+      case 'recorder-failed':
+      default:
+        return '録音を開始できませんでした。もう一度お試しください。';
+    }
+  }, [mic.error]);
+
+  useEffect(() => {
+    if (!mic.error) return;
+    const t = setTimeout(() => mic.clearError(), 5000);
+    return () => clearTimeout(t);
+  }, [mic.error, mic]);
 
   const handleToggleStep = (stepIdx) => {
     if (!selectedPadId) return;
@@ -328,6 +364,11 @@ export default function App() {
                 onPadClick={handlePadClick}
                 selectedPadId={selectedPadId}
                 onPadFilePicked={handlePadFilePicked}
+                micSupported={mic.supported}
+                recordingPadId={mic.recordingPadId}
+                recordingElapsedMs={mic.elapsedMs}
+                onMicStart={handleMicStart}
+                onMicStop={mic.stopRecording}
               />
               <div className="hint-text">
                 {isMobile
@@ -408,6 +449,11 @@ export default function App() {
         isInitialized={audioInit}
         onResume={() => resumeContext()}
       />
+      {micErrorMessage && (
+        <div className="mic-error-toast" role="alert" onClick={() => mic.clearError()}>
+          {micErrorMessage}
+        </div>
+      )}
     </FileDropZone>
   );
 }

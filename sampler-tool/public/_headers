@@ -7,7 +7,8 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: microphone=(), geolocation=(), camera=()
+  Permissions-Policy: microphone=(self), geolocation=(), camera=()
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; manifest-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
 
 # ── Service Worker — must never be stale ───────────────────────────────
 # Browsers re-check SW on every navigation, but a stale CDN cache could
