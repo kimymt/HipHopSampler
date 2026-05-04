@@ -320,3 +320,51 @@
     letter-spacing: 1px;
   }
 }
+
+/* ===== Very small mobile (iPhone SE / 320px) — content overflowed at default tight ===== */
+@media (max-width: 374px) {
+  .transport-bar.tight {
+    padding: 8px 8px;
+    gap: 6px;
+  }
+
+  .transport-bar.tight .controls-section {
+    gap: 6px;
+  }
+
+  .transport-bar.tight .logo-section .logo-mark {
+    font-size: 18px;
+  }
+
+  /* Drop the small "HHS" wordmark — the orange mark alone is enough at this width */
+  .transport-bar.tight .logo-title {
+    display: none;
+  }
+
+  .transport-bar.tight .bpm-control {
+    margin-left: 0;
+    padding: 2px 6px;
+  }
+
+  .transport-bar.tight .bpm-control input {
+    width: 36px;
+    font-size: 16px;
+  }
+
+  .transport-bar.tight .status-section {
+    gap: 4px;
+  }
+
+  .transport-bar.tight .status-item {
+    padding: 2px 6px;
+  }
+
+  /* IDLE → LED dot only at 320, full text returns at 375+ */
+  .transport-bar.tight .status-led {
+    padding: 4px 6px;
+    font-size: 0;
+  }
+  .transport-bar.tight .status-led .led-dot {
+    margin: 0;
+  }
+}
