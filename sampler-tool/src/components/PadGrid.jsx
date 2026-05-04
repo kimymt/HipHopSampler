@@ -18,7 +18,17 @@ PAD_KEYS.forEach((row, rIdx) => {
   });
 });
 
-export const PadGrid = ({ samples, onPadClick, selectedPadId, onPadFilePicked }) => {
+export const PadGrid = ({
+  samples,
+  onPadClick,
+  selectedPadId,
+  onPadFilePicked,
+  micSupported = false,
+  recordingPadId = null,
+  recordingElapsedMs = 0,
+  onMicStart,
+  onMicStop,
+}) => {
   const [activePads, setActivePads] = useState(new Set());
   const fileInputRef = useRef(null);
   const filePickPadIdRef = useRef(null);
@@ -81,6 +91,15 @@ export const PadGrid = ({ samples, onPadClick, selectedPadId, onPadFilePicked })
     fileInputRef.current?.click();
   };
 
+  const handleMicClick = (padId, e) => {
+    e.stopPropagation();
+    if (recordingPadId === padId) {
+      onMicStop?.();
+    } else if (!recordingPadId) {
+      onMicStart?.(padId);
+    }
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     const padId = filePickPadIdRef.current;
@@ -98,25 +117,29 @@ export const PadGrid = ({ samples, onPadClick, selectedPadId, onPadFilePicked })
       const sample = samples[padId];
       const isActive = activePads.has(padId);
       const isSelected = selectedPadId === padId;
+      const isRecording = recordingPadId === padId;
       const padNumber = row * COLS + col + 1;
       const key = PAD_KEYS[row][col];
+      const elapsedSec = isRecording ? (recordingElapsedMs / 1000).toFixed(1) : null;
 
       pads.push(
         <div
           key={padId}
-          className={`pad ${isActive ? 'active' : ''} ${sample ? 'loaded' : 'empty'} ${isSelected ? 'selected' : ''}`}
-          onPointerDown={() => handlePointerDown(padId)}
+          className={`pad ${isActive ? 'active' : ''} ${sample ? 'loaded' : 'empty'} ${isSelected ? 'selected' : ''} ${isRecording ? 'recording' : ''}`}
+          onPointerDown={() => !isRecording && handlePointerDown(padId)}
           onPointerUp={() => handlePointerUp(padId)}
           onPointerLeave={() => handlePointerUp(padId)}
           onPointerCancel={() => handlePointerUp(padId)}
-          title={sample ? sample.name : 'Drop sample here or tap + to pick a file'}
+          title={isRecording ? 'Recording — tap mic to stop' : sample ? sample.name : 'Drop sample here or tap + to pick a file'}
           style={{ touchAction: 'manipulation' }}
           role="button"
-          aria-label={`Pad ${padNumber} (key ${key.toUpperCase()}), ${sample ? sample.name : 'empty'}`}
+          aria-label={`Pad ${padNumber} (key ${key.toUpperCase()}), ${isRecording ? 'recording' : sample ? sample.name : 'empty'}`}
         >
           <div className="pad-corner pad-number">{padNumber.toString().padStart(2, '0')}</div>
           <div className="pad-corner pad-key">{key.toUpperCase()}</div>
-          {sample ? (
+          {isRecording ? (
+            <span className="rec-elapsed">REC {elapsedSec}s</span>
+          ) : sample ? (
             <span className="sample-name">{sample.name.split('.')[0]}</span>
           ) : (
             <>
@@ -131,7 +154,37 @@ export const PadGrid = ({ samples, onPadClick, selectedPadId, onPadFilePicked })
               >
                 +
               </button>
+              {micSupported && (
+                <button
+                  type="button"
+                  className="pad-mic-btn"
+                  onClick={(e) => handleMicClick(padId, e)}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  disabled={!!recordingPadId && !isRecording}
+                  title="Record from microphone"
+                  aria-label={`Record mic for pad ${padNumber}`}
+                >
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V20H8v2h8v-2h-3v-2.08A7 7 0 0 0 19 11h-2z"
+                    />
+                  </svg>
+                </button>
+              )}
             </>
+          )}
+          {isRecording && (
+            <button
+              type="button"
+              className="pad-mic-btn pad-mic-btn--stop"
+              onClick={(e) => handleMicClick(padId, e)}
+              onPointerDown={(e) => e.stopPropagation()}
+              title="Stop recording"
+              aria-label={`Stop recording for pad ${padNumber}`}
+            >
+              <span className="rec-stop-square" />
+            </button>
           )}
         </div>
       );
