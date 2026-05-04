@@ -1,6 +1,11 @@
 # Deploy — Cloudflare Pages
 
-ホスティング: **Cloudflare Pages** / DNS: 既存の Cloudflare アカウント
+| | |
+|---|---|
+| **本番URL** | https://sampler.mymt.casa |
+| **CF Pages URL** | https://hip-hop-sampler.pages.dev |
+| **ホスティング** | Cloudflare Pages |
+| **DNS** | Cloudflare (mymt.casa) |
 
 ---
 
@@ -42,14 +47,15 @@
 - DevTools → Application → Service Workers で SW がアクティブ
 - DevTools → Application → Manifest で manifest が読み込まれている
 
-### 4. カスタムドメイン (任意、後からでも可)
+### 4. カスタムドメイン (`sampler.mymt.casa`)
 
-1. Pages プロジェクト → **Custom domains** → **Set up a custom domain**
-2. ドメインを入力 (例: `sampler.example.com`)
-3. Cloudflare が自動で CNAME を作成、SSL 証明書を発行 (~2分)
-4. 完了後、`https://sampler.example.com` でアクセス可能
+1. Pages プロジェクト `hip-hop-sampler` → **Custom domains** タブ → **Set up a custom domain**
+2. `sampler.mymt.casa` を入力 → **Continue**
+3. Cloudflare が `mymt.casa` ゾーン内に CNAME を自動追加 → 確認画面 → **Activate domain**
+4. SSL 証明書発行を待つ (~30秒〜2分)
+5. 完了後、`https://sampler.mymt.casa` でアクセス可能。`hip-hop-sampler.pages.dev` も併存
 
-> 既存ドメインが Cloudflare DNS に乗っているため、外部 DNS 設定は不要。Pages がレコードを自動追加してくれる。
+> `mymt.casa` が既に Cloudflare DNS に乗っているため、外部 DNS の手作業は一切不要。Pages がレコードを自動追加 (CNAME `sampler` → `hip-hop-sampler.pages.dev`)。
 
 ---
 

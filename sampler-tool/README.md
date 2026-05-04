@@ -1,5 +1,7 @@
 # Hip Hop Sampler
 
+🎛 **本番**: https://sampler.mymt.casa
+
 DAW (Music Production Software) で挫折した未経験者でも、30分でビートが作れるブラウザベースのサンプリングツール。
 
 Teenage Engineering EP-133 / Akai MPC 風のUIで、Web Audio API ベース。インストール不要、PWAとしてホーム画面に追加すればオフラインで動作。
