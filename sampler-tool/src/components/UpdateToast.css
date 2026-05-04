@@ -26,6 +26,14 @@
   border-left: 3px solid var(--te-yellow);
 }
 
+.pwa-toast-persist {
+  border-left: 3px solid var(--te-blue);
+}
+
+.pwa-toast-persist-denied {
+  border-left: 3px solid var(--display-amber);
+}
+
 .pwa-toast-body {
   display: flex;
   flex-direction: column;

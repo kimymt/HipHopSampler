@@ -27,14 +27,14 @@ const STEPS = [
   },
   {
     title: 'サンプルを読み込む',
-    body: '⚠️ 重要: 先にパッドを「クリックして選択」(青枠) → 音声ファイル(WAV/MP3)を画面にドラッグ&ドロップ。順番が逆だと無視されます。',
+    body: 'デスクトップ: パッドを選択 → 音声ファイル(WAV/MP3)を画面にドラッグ&ドロップ。\nモバイル: 空パッドの "+" ボタンをタップしてファイル選択。',
     target: '.pad-grid',
     position: 'right',
   },
   {
     title: '③ サンプル編集パネル',
-    body: '選択中のパッドの波形・音量・パンをここで編集。長い音源からの切り出しは ↻ LOOP PLAY で耳で聴きながら、SET IN / SET OUT ボタンで欲しい瞬間に位置を決められます。',
-    target: '.workspace-right',
+    body: '選択中のパッドの波形・音量・パン・トリミングをここで編集。長い音源は ↻ LOOP PLAY で聴きながら SET IN/OUT で位置を決められます。\nモバイルではロード済みパッドをタップするとシートが下から開きます。',
+    target: '.workspace-right, .pad-grid', // desktop fallbacks to pad-grid on mobile
     position: 'left',
   },
   {
@@ -57,8 +57,8 @@ const STEPS = [
   },
   {
     title: '● ライブ録音',
-    body: 'Record + Play 同時押し → 再生中にパッドを叩くと、その瞬間がパターンに記録されます。演奏感覚でビートを組みたい時に。',
-    target: '.transport-btn.record',
+    body: 'Record + Play 同時押し → 再生中にパッドを叩くと、その瞬間がパターンに記録されます。演奏感覚でビートを組みたい時に。\nモバイルでは ⚙ 設定シート内に Record トグルがあります。',
+    target: '.transport-btn.record, .settings-btn',
     position: 'bottom',
   },
   {
@@ -75,8 +75,8 @@ const STEPS = [
   },
   {
     title: '🎉 準備OK！',
-    body: 'これで一通りの機能を把握できました。困ったら右上の ? ボタンでこのツアーを再生できます。早速ビートを作ってみましょう！',
-    target: '.tour-help-btn',
+    body: 'これで一通りの機能を把握できました。困ったら右上の ? ボタンでこのツアーを再生できます。早速ビートを作ってみましょう！\nモバイルでは ⚙ 設定シート内の「操作ガイド」から再表示できます。',
+    target: '.tour-help-btn, .settings-btn',
     position: 'bottom',
   },
 ];
@@ -134,7 +134,15 @@ export const Tour = ({ open, onClose }) => {
         setRect(null);
         return;
       }
-      const el = document.querySelector(cur.target);
+      // Try each comma-separated selector in order — first match wins.
+      // (querySelector with a selector list returns first-in-DOM, not first-in-list,
+      // which would pick the wrong element when both targets exist.)
+      const selectors = cur.target.split(',').map((s) => s.trim()).filter(Boolean);
+      let el = null;
+      for (const sel of selectors) {
+        el = document.querySelector(sel);
+        if (el) break;
+      }
       setRect(el ? el.getBoundingClientRect() : null);
     };
     update();

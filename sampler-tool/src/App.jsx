@@ -11,8 +11,12 @@ import { UpdateToast } from './components/UpdateToast';
 import { StartupLoader } from './components/StartupLoader';
 import { BottomSheet } from './components/BottomSheet';
 import { SettingsSheet } from './components/SettingsSheet';
+import { AudioGate } from './components/AudioGate';
+import { OfflineBadge } from './components/OfflineBadge';
 import { useAudioContext } from './hooks/useAudioContext';
 import { useIsMobile } from './hooks/useMediaQuery';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
+import { usePersistentStorage } from './hooks/usePersistentStorage';
 import { usePWA } from './hooks/usePWA';
 import { useAudioEngine } from './hooks/useAudioEngine';
 import { usePersistedSamples } from './hooks/usePersistedSamples';
@@ -32,7 +36,9 @@ const ALL_PAD_IDS = (() => {
 })();
 
 export default function App() {
-  const { audioContext, initAudioContext } = useAudioContext();
+  const { audioContext, initAudioContext, contextState, isInitialized: audioInit, resumeContext } = useAudioContext();
+  const online = useOnlineStatus();
+  const persist = usePersistentStorage();
   const { trigger, loopTrim, stopAll } = useAudioEngine(initAudioContext);
   const {
     samples,
@@ -74,6 +80,9 @@ export default function App() {
     if (selectedPadId && files.length > 0) {
       initAudioContext();
       loadSample(selectedPadId, files[0]);
+      // First successful load is a good moment to ask the OS to keep
+      // our IDB safe from quota eviction.
+      persist.maybeRequestOnce();
     }
   };
 
@@ -104,6 +113,7 @@ export default function App() {
     initAudioContext();
     setSelectedPadId(padId);
     loadSample(padId, file);
+    persist.maybeRequestOnce();
   };
 
   const handleToggleStep = (stepIdx) => {
@@ -303,6 +313,7 @@ export default function App() {
           onInstallClick={pwa.promptInstall}
           storageInfo={storageInfo}
           onSettingsClick={() => setSettingsOpen(true)}
+          online={online}
         />
 
         <main className="app-main">
@@ -386,9 +397,16 @@ export default function App() {
       <UpdateToast
         needRefresh={pwa.needRefresh}
         offlineReady={pwa.offlineReady}
+        persistResult={persist.recentlyResolved ? persist.lastResult : null}
         onApply={pwa.applyUpdate}
         onDismissUpdate={pwa.dismissUpdate}
         onDismissOffline={pwa.dismissOfflineReady}
+        onDismissPersist={persist.dismiss}
+      />
+      <AudioGate
+        contextState={contextState}
+        isInitialized={audioInit}
+        onResume={() => resumeContext()}
       />
     </FileDropZone>
   );
