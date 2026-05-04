@@ -1,7 +1,19 @@
 import React from 'react';
+import { InstallButton } from './InstallButton';
 import './TransportBar.css';
 
-export const TransportBar = ({ bpm, onBpmChange, isPlaying, onPlayToggle, isRecording, onRecordToggle, loadedCount, onHelpClick }) => {
+export const TransportBar = ({
+  bpm,
+  onBpmChange,
+  isPlaying,
+  onPlayToggle,
+  isRecording,
+  onRecordToggle,
+  loadedCount,
+  onHelpClick,
+  canInstall,
+  onInstallClick,
+}) => {
   return (
     <div className="transport-bar">
       <div className="transport-section logo-section">
@@ -52,6 +64,7 @@ export const TransportBar = ({ bpm, onBpmChange, isPlaying, onPlayToggle, isReco
           <span className="led-dot"></span>
           <span>{isPlaying ? 'PLAYING' : 'IDLE'}</span>
         </div>
+        <InstallButton canInstall={canInstall} onClick={onInstallClick} />
         <button
           className="tour-help-btn"
           onClick={onHelpClick}

@@ -6,7 +6,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "cwd": "sampler-tool",
-      "port": 5174
+      "port": 5173
     }
   ]
 }
