@@ -190,4 +190,10 @@
   .sequencer.mobile .step-num {
     font-size: 10px;
   }
+
+  /* BAR tabs: bump to 44px tall for iOS HIG */
+  .sequencer.mobile .seq-tab {
+    padding: 14px 0;
+    min-height: 44px;
+  }
 }

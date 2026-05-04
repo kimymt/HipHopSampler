@@ -15,15 +15,15 @@ export const IosInstallGuide = ({ open, onClose }) => {
         </p>
         <ol className="ios-guide-steps">
           <li>
-            <span className="step-num">1</span>
+            <span className="ios-step-num">1</span>
             画面下部の <strong className="ios-icon">⬆︎</strong> 共有ボタンをタップ
           </li>
           <li>
-            <span className="step-num">2</span>
+            <span className="ios-step-num">2</span>
             メニューを下にスクロール → <strong>「ホーム画面に追加」</strong> を選ぶ
           </li>
           <li>
-            <span className="step-num">3</span>
+            <span className="ios-step-num">3</span>
             右上の <strong>「追加」</strong> をタップ
           </li>
         </ol>
