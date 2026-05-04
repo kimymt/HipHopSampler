@@ -130,7 +130,7 @@ export const PadGrid = ({
           onPointerUp={() => handlePointerUp(padId)}
           onPointerLeave={() => handlePointerUp(padId)}
           onPointerCancel={() => handlePointerUp(padId)}
-          title={isRecording ? 'Recording — tap mic to stop' : sample ? sample.name : 'Drop sample here or tap + to pick a file'}
+          title={isRecording ? 'Recording — tap mic to stop' : sample ? sample.name : '🎙 to record from mic, + to pick a file, or drop audio here'}
           style={{ touchAction: 'manipulation' }}
           role="button"
           aria-label={`Pad ${padNumber} (key ${key.toUpperCase()}), ${isRecording ? 'recording' : sample ? sample.name : 'empty'}`}

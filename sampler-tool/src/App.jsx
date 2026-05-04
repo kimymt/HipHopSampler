@@ -372,8 +372,8 @@ export default function App() {
               />
               <div className="hint-text">
                 {isMobile
-                  ? 'パッドの "+" でファイル選択 · パッドタップで再生・編集'
-                  : 'Drag & drop audio files (WAV / MP3) onto a selected pad'}
+                  ? '🎙 でマイク録音 · "+" でファイル選択 · パッドタップで再生・編集'
+                  : 'パッド左下 🎙 でマイク録音 / 右下 "+" でファイル選択 / WAV・MP3 をドラッグ&ドロップでもOK'}
               </div>
             </section>
 
