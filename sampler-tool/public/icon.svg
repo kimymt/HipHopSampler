@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff6f3d"/>
+      <stop offset="1" stop-color="#c43614"/>
+    </linearGradient>
+    <linearGradient id="pad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ede7d3"/>
+      <stop offset="1" stop-color="#c9c2ad"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <g transform="translate(96 96)">
+    <!-- 4x4 pad grid -->
+    <g fill="url(#pad)" stroke="#a8a18c" stroke-width="3">
+      <rect x="0"   y="0"   width="64" height="64" rx="10"/>
+      <rect x="84"  y="0"   width="64" height="64" rx="10"/>
+      <rect x="168" y="0"   width="64" height="64" rx="10"/>
+      <rect x="252" y="0"   width="64" height="64" rx="10"/>
+      <rect x="0"   y="84"  width="64" height="64" rx="10"/>
+      <rect x="84"  y="84"  width="64" height="64" rx="10"/>
+      <rect x="168" y="84"  width="64" height="64" rx="10"/>
+      <rect x="252" y="84"  width="64" height="64" rx="10"/>
+      <rect x="0"   y="168" width="64" height="64" rx="10"/>
+      <rect x="84"  y="168" width="64" height="64" rx="10"/>
+      <rect x="168" y="168" width="64" height="64" rx="10"/>
+      <rect x="252" y="168" width="64" height="64" rx="10"/>
+      <rect x="0"   y="252" width="64" height="64" rx="10"/>
+      <rect x="84"  y="252" width="64" height="64" rx="10"/>
+      <rect x="168" y="252" width="64" height="64" rx="10"/>
+      <rect x="252" y="252" width="64" height="64" rx="10"/>
+    </g>
+    <!-- Highlighted "loaded" pads to give the brand pop -->
+    <g fill="#ffcc1a" stroke="#c9a020" stroke-width="3">
+      <rect x="0"   y="0"   width="64" height="64" rx="10"/>
+      <rect x="84"  y="84"  width="64" height="64" rx="10"/>
+      <rect x="168" y="168" width="64" height="64" rx="10"/>
+      <rect x="252" y="252" width="64" height="64" rx="10"/>
+    </g>
+  </g>
+</svg>
