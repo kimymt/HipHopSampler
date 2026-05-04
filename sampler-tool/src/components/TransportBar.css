@@ -266,16 +266,21 @@
     font-size: 14px;
   }
 
+  /* Unify all bar elements to a single 44px height row.
+     Without box-sizing + explicit height, the LCD boxes (BPM, PADS) grew to
+     46-52px from internal padding while the LED pill stayed at 24px,
+     making the bar look uneven. */
   .transport-bar.tight .bpm-control {
     margin-left: 4px;
-    padding: 5px 10px;
-    min-height: 44px;
+    height: 44px;
+    padding: 2px 10px;
+    box-sizing: border-box;
     justify-content: center;
   }
 
   .transport-bar.tight .bpm-control input {
     width: 44px;
-    height: 28px;
+    height: 22px;
     font-size: 18px;
     padding: 0;
   }
@@ -290,7 +295,10 @@
   }
 
   .transport-bar.tight .status-item {
-    padding: 3px 8px;
+    height: 44px;
+    padding: 2px 8px;
+    box-sizing: border-box;
+    justify-content: center;
   }
 
   .transport-bar.tight .status-num {
@@ -298,7 +306,9 @@
   }
 
   .transport-bar.tight .status-led {
-    padding: 4px 8px;
+    height: 44px;
+    padding: 0 10px;
+    box-sizing: border-box;
     font-size: 9px;
     letter-spacing: 1px;
   }
