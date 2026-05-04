@@ -21,7 +21,7 @@
 
 ## 🟢 P2 — 拡張機能
 
-- [ ] **DESIGN.md 作成** (Phase 3 マージ後) — Bottom Sheet / Bar Tabs / FAB 等の新コンポーネントを暗黙トークンに頼らず明文化。`/design-consultation` で生成。
+- [x] **DESIGN.md 作成** ✅ Phase 3 マージ後に手書きで作成。Bottom Sheet / Bar Tabs / Settings ⚙ などすべてカタログ化。
 - [ ] **エフェクト** — リバーブ、ディレイ、ローパスフィルタ
 - [ ] **ピッチシフト/タイムストレッチ**
 - [ ] **MIDI入力対応** — Web MIDI API
