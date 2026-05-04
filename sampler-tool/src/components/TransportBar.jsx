@@ -1,6 +1,7 @@
 import React from 'react';
 import { InstallButton } from './InstallButton';
 import { StorageBadge } from './StorageBadge';
+import { OfflineBadge } from './OfflineBadge';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import './TransportBar.css';
 
@@ -17,6 +18,7 @@ export const TransportBar = ({
   onInstallClick,
   storageInfo,
   onSettingsClick,
+  online = true,
 }) => {
   const isMobile = useIsMobile();
 
@@ -77,6 +79,8 @@ export const TransportBar = ({
           <span className="led-dot"></span>
           <span>{isPlaying ? 'PLAY' : 'IDLE'}</span>
         </div>
+
+        <OfflineBadge online={online} />
 
         {/* Desktop: inline. Mobile: hidden, accessible via ⚙ settings sheet. */}
         {!isMobile && (
