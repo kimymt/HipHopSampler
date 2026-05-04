@@ -6,28 +6,16 @@
 
 ## 📍 現在地 (2026-05-04)
 
-**main の実装状況** (4 PR マージ済み):
+**main の実装状況** (6 PR マージ済み):
 - ✅ Tier 1 + Tier 2 (基礎ビートメイキング機能、AUTO CHOP まで)
 - ✅ PWA Phase 1 — manifest, SW, install UI (PR #1)
 - ✅ PWA Phase 2 — IndexedDB persistence (PR #2)
 - ✅ PWA Phase 3 — mobile responsive + touch (PR #3)
 - ✅ DESIGN.md (PR #4)
+- ✅ ROADMAP sync (PR #5)
+- ✅ PWA Phase 4 — lifecycle polish (PR #6)
 
-**次のセッションで着手:** PWA Phase 4 (polish)
-
----
-
-## 🎯 PWA Phase 4 — Polish (次セッション)
-
-スコープ小さめ、1日想定。
-
-- [ ] **AudioContext resume on visibilitychange** — バックグラウンドから戻った時に context が suspended なら resume。iOS Safari の audio bug 対策の基本中の基本
-- [ ] **Persistent Storage explicit request UX** — 初回サンプルロード時に `navigator.storage.persist()` を呼び、結果 (granted / denied) を user に通知 (toast or settings sheet)
-- [ ] **オフライン状態表示** — `navigator.onLine` 監視。オフライン時は TransportBar に小さな「OFFLINE」インジケータ
-- [ ] **AudioContext suspended UX** — autoplay policy で初回 suspended な時、画面に「タップで起動」オーバーレイ
-- [ ] **(オプション) Tour spotlight モバイル動作の検証/修正** — Phase 3 では既存ロジックそのまま乗せた。実機で挙動を確認
-
-実装ブランチ: `feature/pwa-phase4-polish`
+**PWA 4 フェーズ全完了**。次は P2 拡張機能 or 技術負債解消の選択。
 
 ---
 
@@ -60,6 +48,11 @@
 - [x] BPM `inputmode="numeric"`
 - [x] BottomSheet (sample panel) + SettingsSheet (補助機能)
 - [x] Pad "+" file picker fallback (iOS HTML5 D&D 不可対応)
+- [x] AudioContext resume on visibilitychange (Phase 4)
+- [x] AudioGate (suspended 時の tap-to-resume overlay)
+- [x] OfflineBadge (navigator.onLine 監視)
+- [x] usePersistentStorage + persist トースト
+- [x] Tour mobile target fallback (querySelector list 順次試行)
 
 ### Documentation
 - [x] SAMPLER_RESEARCH.md — 競合5製品分析
@@ -110,4 +103,32 @@
 
 ---
 
-最終更新: 2026-05-04 / Phase 3 + DESIGN.md マージ後 / Phase 4 開始前
+最終更新: 2026-05-04 / **PWA 4 フェーズ全完了**
+
+---
+
+## 🎯 次の選択肢
+
+PWA 機能としては完成。ここから先は3方向に分岐:
+
+### A. 機能追加 (P2 拡張機能)
+- マイク録音 (getUserMedia でサンプル直接録音) — ペルソナ的に最も "音楽的" な拡張
+- エフェクト (リバーブ・ディレイ) — Web Audio Effects、シンプル
+- 複数バンク (A/B/C/D で 64 パッド)
+- WAV エクスポート (OfflineAudioContext)
+- MIDI 入力対応
+
+### B. 技術的負債解消
+- ユニットテスト整備 (Vitest, hooks/utils 中心)
+- TypeScript 完全移行 (.jsx → .tsx)
+- App.jsx 責務分離 (`useChopGroups`, `useAutoChop` フック)
+- オーディオレイテンシー実機計測
+
+### C. 実機 QA + リリース
+- 実機 (iPhone/Android) で全機能テスト
+- /qa スキルで体系的にバグ拾い
+- 初リリース (v1.0.0) タグ + CHANGELOG
+- デプロイ (Vercel/Netlify/GitHub Pages)
+
+A は楽しい、B は健康に良い、C はユーザーに届ける。
+ペルソナ視点 (「DAW挫折者を救う」) では C → A の順がインパクト大。
