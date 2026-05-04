@@ -217,8 +217,8 @@
 }
 
 .settings-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   border: 1px solid var(--bone-darker);
   background: linear-gradient(180deg, var(--bone-light), var(--bone));
@@ -261,19 +261,23 @@
   }
 
   .transport-bar.tight .transport-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 13px;
+    width: 44px;
+    height: 44px;
+    font-size: 14px;
   }
 
   .transport-bar.tight .bpm-control {
     margin-left: 4px;
-    padding: 3px 8px;
+    padding: 5px 10px;
+    min-height: 44px;
+    justify-content: center;
   }
 
   .transport-bar.tight .bpm-control input {
-    width: 40px;
-    font-size: 16px;
+    width: 44px;
+    height: 28px;
+    font-size: 18px;
+    padding: 0;
   }
 
   .transport-bar.tight .bpm-control label {

@@ -178,6 +178,18 @@
 @media (max-width: 767px) {
   .pad-add-btn {
     display: flex;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    bottom: 4px;
+    right: 4px;
+  }
+
+  /* Extend hit area to 44x44 (iOS HIG minimum) without growing the visible button. */
+  .pad-add-btn::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
   }
 }
 
@@ -224,10 +236,6 @@
     font-size: 9px;
     padding: 4px;
   }
-
-  .pad-add-btn {
-    width: 26px;
-    height: 26px;
-    font-size: 16px;
-  }
+  /* .pad-add-btn mobile sizing is set in the earlier @media block above
+     (32x32 visual + 44px hit-area via ::before extension). */
 }
