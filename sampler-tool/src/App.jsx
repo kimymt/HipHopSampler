@@ -6,7 +6,10 @@ import { TransportBar } from './components/TransportBar';
 import { Sequencer } from './components/Sequencer';
 import { Mixer } from './components/Mixer';
 import { Tour } from './components/Tour';
+import { IosInstallGuide } from './components/IosInstallGuide';
+import { UpdateToast } from './components/UpdateToast';
 import { useAudioContext } from './hooks/useAudioContext';
+import { usePWA } from './hooks/usePWA';
 import { useAudioEngine } from './hooks/useAudioEngine';
 import { useSampleBuffer } from './hooks/useSampleBuffer';
 import { useSequencer } from './hooks/useSequencer';
@@ -42,6 +45,7 @@ export default function App() {
   const [currentStep, setCurrentStep] = useState(-1);
   const [tourOpen, setTourOpen] = useState(false);
   const [chopMessage, setChopMessage] = useState(null);
+  const pwa = usePWA();
 
   useEffect(() => {
     if (!localStorage.getItem(TOUR_FLAG)) {
@@ -237,6 +241,8 @@ export default function App() {
           onRecordToggle={() => setIsRecording((r) => !r)}
           loadedCount={loadedCount}
           onHelpClick={() => setTourOpen(true)}
+          canInstall={pwa.canInstall}
+          onInstallClick={pwa.promptInstall}
         />
 
         <main className="app-main">
@@ -303,6 +309,14 @@ export default function App() {
         </main>
       </div>
       <Tour open={tourOpen} onClose={handleTourClose} />
+      <IosInstallGuide open={pwa.showIosGuide} onClose={pwa.dismissIosGuide} />
+      <UpdateToast
+        needRefresh={pwa.needRefresh}
+        offlineReady={pwa.offlineReady}
+        onApply={pwa.applyUpdate}
+        onDismissUpdate={pwa.dismissUpdate}
+        onDismissOffline={pwa.dismissOfflineReady}
+      />
     </FileDropZone>
   );
 }

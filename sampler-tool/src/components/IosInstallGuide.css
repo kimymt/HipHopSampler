@@ -1,0 +1,138 @@
+.ios-guide-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(20, 16, 12, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.ios-guide-card {
+  background: linear-gradient(180deg, var(--bone-light), var(--bone));
+  border: 1px solid var(--bone-darker);
+  border-radius: 14px;
+  padding: 22px 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 14px 40px rgba(20, 16, 12, 0.55);
+  color: var(--ink);
+}
+
+.ios-guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ios-guide-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.ios-guide-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-soft);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ios-guide-close:hover {
+  background: var(--bone-darker);
+  color: var(--ink);
+}
+
+.ios-guide-intro {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0 0 16px;
+}
+
+.ios-guide-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ios-guide-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(240, 74, 31, 0.06);
+  border: 1px solid rgba(240, 74, 31, 0.2);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.step-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--te-orange);
+  color: #fff;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ios-icon {
+  display: inline-block;
+  padding: 0 6px;
+  background: var(--bone-light);
+  border: 1px solid var(--bone-darker);
+  border-radius: 4px;
+  font-family: var(--sans);
+  margin: 0 2px;
+}
+
+.ios-guide-note {
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.ios-guide-ok {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--te-orange-dark);
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.4),
+    0 2px 6px rgba(240, 74, 31, 0.3);
+}
+
+.ios-guide-ok:hover {
+  transform: translateY(-1px);
+}
