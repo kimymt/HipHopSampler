@@ -83,7 +83,7 @@
   color: var(--ink);
 }
 
-.step-num {
+.ios-step-num {
   flex-shrink: 0;
   width: 26px;
   height: 26px;
