@@ -1,0 +1,65 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at top, var(--bone-light) 0%, var(--bone) 60%, var(--bone-dark) 100%);
+}
+
+.app-main {
+  flex: 1;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(480px, auto) 1fr;
+  gap: 26px;
+  align-items: start;
+}
+
+.workspace-left,
+.workspace-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.workspace-bottom {
+  width: 100%;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 2.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 4px;
+  text-transform: uppercase;
+}
+
+.section-label .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--te-orange);
+  box-shadow: 0 0 0 2px rgba(240, 74, 31, 0.2);
+}
+
+.hint-text {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-muted);
+  text-align: center;
+  letter-spacing: 0.5px;
+}

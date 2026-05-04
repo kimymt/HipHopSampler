@@ -1,0 +1,209 @@
+import React, { useEffect, useState, useLayoutEffect } from 'react';
+import './Tour.css';
+
+const STEPS = [
+  {
+    title: 'ようこそ 👋',
+    body: 'Hip Hop Sampler の使い方を1分で案内します。Hip Hopビートを作るのに必要な機能だけに絞っています。',
+    target: null,
+  },
+  {
+    title: '① トランスポートバー',
+    body: 'ここで再生・録音・テンポを操作します。BPM (1分の拍数) は Hip Hop なら 85〜95 が定番です。',
+    target: '.transport-bar',
+    position: 'bottom',
+  },
+  {
+    title: '② パッドグリッド',
+    body: '4×4 = 16個のパッドに音声ファイルを割り当てて鳴らします。各パッド右上の英字はキーボードショートカット。',
+    target: '.pad-grid',
+    position: 'right',
+  },
+  {
+    title: 'パッドの状態',
+    body: 'クリーム色 (DROP) = 空。オレンジ = サンプル読み込み済み。青枠 = 選択中。クリックすると選択 + 即再生。',
+    target: '.pad-grid .pad:nth-child(1)',
+    position: 'right',
+  },
+  {
+    title: 'サンプルを読み込む',
+    body: '⚠️ 重要: 先にパッドを「クリックして選択」(青枠) → 音声ファイル(WAV/MP3)を画面にドラッグ&ドロップ。順番が逆だと無視されます。',
+    target: '.pad-grid',
+    position: 'right',
+  },
+  {
+    title: '③ サンプル編集パネル',
+    body: '選択中のパッドの波形・音量・パンをここで編集。長い音源からの切り出しは ↻ LOOP PLAY で耳で聴きながら、SET IN / SET OUT ボタンで欲しい瞬間に位置を決められます。',
+    target: '.workspace-right',
+    position: 'left',
+  },
+  {
+    title: '④ シーケンサー',
+    body: '16マス = 1小節。マスをクリックすると、そのタイミングで選択中のパッドが自動再生されます。',
+    target: '.sequencer',
+    position: 'top',
+  },
+  {
+    title: '🥁 キックパターン例',
+    body: 'シーケンサーの 1, 5, 9, 13 をクリックすると、ダンスミュージック定番の 4-on-the-floor キックになります。4マス毎に薄く色分けされているのが拍頭です。',
+    target: '.sequencer-grid',
+    position: 'top',
+  },
+  {
+    title: '▶ 再生',
+    body: 'パターンを組んだら Play を押すだけ。再生中もシーケンサーは編集できます。再生位置は黄色のカーソルで分かります。',
+    target: '.transport-btn.play',
+    position: 'bottom',
+  },
+  {
+    title: '● ライブ録音',
+    body: 'Record + Play 同時押し → 再生中にパッドを叩くと、その瞬間がパターンに記録されます。演奏感覚でビートを組みたい時に。',
+    target: '.transport-btn.record',
+    position: 'bottom',
+  },
+  {
+    title: '⌨ キーボード',
+    body: '1234 / QWER / ASDF / ZXCV の4列でパッドを叩けます。マウスより速くて表現力が出ます。BPM入力中は無効化されます。',
+    target: '.pad-grid',
+    position: 'right',
+  },
+  {
+    title: '💾 自動保存',
+    body: 'BPMとシーケンサーパターンはブラウザに自動保存されます。リロードしても残ります。⚠️ 音声ファイル自体は保存されないので、再ドロップが必要です。',
+    target: '.transport-bar',
+    position: 'bottom',
+  },
+  {
+    title: '🎉 準備OK！',
+    body: 'これで一通りの機能を把握できました。困ったら右上の ? ボタンでこのツアーを再生できます。早速ビートを作ってみましょう！',
+    target: '.tour-help-btn',
+    position: 'bottom',
+  },
+];
+
+const TOOLTIP_GAP = 14;
+const TOOLTIP_W = 360;
+
+const computePosition = (rect, position) => {
+  if (!rect) {
+    return {
+      left: '50%',
+      top: '50%',
+      transform: 'translate(-50%, -50%)',
+    };
+  }
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let left, top;
+  switch (position) {
+    case 'top':
+      left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
+      top = rect.top - TOOLTIP_GAP;
+      return { left: clamp(left, 12, vw - TOOLTIP_W - 12), top, transform: 'translateY(-100%)' };
+    case 'bottom':
+      left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
+      top = rect.bottom + TOOLTIP_GAP;
+      return { left: clamp(left, 12, vw - TOOLTIP_W - 12), top };
+    case 'left':
+      left = rect.left - TOOLTIP_GAP;
+      top = rect.top + rect.height / 2;
+      return { left, top, transform: 'translate(-100%, -50%)' };
+    case 'right':
+    default:
+      left = rect.right + TOOLTIP_GAP;
+      top = rect.top + rect.height / 2;
+      return { left: Math.min(left, vw - TOOLTIP_W - 12), top, transform: 'translateY(-50%)' };
+  }
+};
+
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+export const Tour = ({ open, onClose }) => {
+  const [step, setStep] = useState(0);
+  const [rect, setRect] = useState(null);
+
+  useEffect(() => {
+    if (open) setStep(0);
+  }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const cur = STEPS[step];
+    const update = () => {
+      if (!cur.target) {
+        setRect(null);
+        return;
+      }
+      const el = document.querySelector(cur.target);
+      setRect(el ? el.getBoundingClientRect() : null);
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    const interval = setInterval(update, 200); // catches DOM updates
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+      clearInterval(interval);
+    };
+  }, [step, open]);
+
+  if (!open) return null;
+
+  const cur = STEPS[step];
+  const isLast = step === STEPS.length - 1;
+  const tooltipStyle = computePosition(rect, cur.position);
+
+  const next = () => {
+    if (isLast) {
+      onClose(true);
+    } else {
+      setStep((s) => s + 1);
+    }
+  };
+
+  const prev = () => setStep((s) => Math.max(0, s - 1));
+  const skip = () => onClose(true);
+
+  return (
+    <div className="tour-root">
+      <div className="tour-backdrop" onClick={skip} />
+      {rect && (
+        <div
+          className="tour-spotlight"
+          style={{
+            left: rect.left - 6,
+            top: rect.top - 6,
+            width: rect.width + 12,
+            height: rect.height + 12,
+          }}
+        />
+      )}
+      <div className="tour-tooltip" style={{ ...tooltipStyle, width: TOOLTIP_W }}>
+        <div className="tour-step-num">
+          STEP {step + 1} / {STEPS.length}
+        </div>
+        <h3 className="tour-title">{cur.title}</h3>
+        <p className="tour-body">{cur.body}</p>
+        <div className="tour-progress">
+          <div className="tour-progress-fill" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+        </div>
+        <div className="tour-actions">
+          <button className="tour-btn tour-skip" onClick={skip}>
+            スキップ
+          </button>
+          <div className="tour-actions-right">
+            {step > 0 && (
+              <button className="tour-btn" onClick={prev}>
+                ← 戻る
+              </button>
+            )}
+            <button className="tour-btn tour-primary" onClick={next}>
+              {isLast ? '完了 🎉' : '次へ →'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
