@@ -167,6 +167,7 @@
 
 .status-value {
   font-family: var(--mono);
+  line-height: 1.15; /* match the BPM input's "normal" line-height so labels align */
 }
 
 .status-num {
@@ -174,6 +175,7 @@
   font-weight: 700;
   color: var(--display-red);
   text-shadow: 0 0 8px rgba(255, 51, 34, 0.5);
+  line-height: 1.15;
 }
 
 .status-denom {
@@ -300,6 +302,12 @@
   .transport-bar.tight .status-item {
     height: 40px;
     padding: 2px 8px;
+  }
+
+  /* Match the mobile BPM label sizing so PADS / BPM rows visually align */
+  .transport-bar.tight .status-label {
+    font-size: 8px;
+    letter-spacing: 1px;
   }
 
   .transport-bar.tight .status-num {
