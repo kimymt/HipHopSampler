@@ -1,0 +1,88 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Hardware body — warm cream/bone (TE EP-133 / MPC Sample) */
+  --bone: #e3ddc9;
+  --bone-light: #ede7d3;
+  --bone-dark: #c9c2ad;
+  --bone-darker: #a8a18c;
+
+  /* Display panel — dark inset LCD */
+  --display-bg: #161310;
+  --display-bg-soft: #24201b;
+  --display-frame: #0a0908;
+
+  /* Ink (text/labels stamped on hardware) */
+  --ink: #1a1612;
+  --ink-soft: #4a4337;
+  --ink-muted: #7a7363;
+
+  /* Vibrant accents */
+  --te-orange: #f04a1f;        /* signature TE orange — pads, primary action */
+  --te-orange-light: #ff6f3d;
+  --te-orange-dark: #c43614;
+  --display-red: #ff3322;       /* digital red, display readouts */
+  --display-amber: #ffaa44;
+  --te-blue: #1f6acc;           /* secondary accent */
+  --te-yellow: #ffcc1a;
+  --te-cream-btn: #ddd5be;      /* lighter button on bone */
+
+  /* Mono / Sans */
+  --sans: "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --mono: "JetBrains Mono", "Menlo", "Monaco", "Courier New", monospace;
+
+  font: 16px/1.5 var(--sans);
+  color-scheme: light;
+  color: var(--ink);
+  background: var(--bone);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bone);
+  color: var(--ink);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: var(--sans);
+  font-size: 14px;
+}
+
+input[type="range"] {
+  accent-color: var(--te-orange);
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--bone-dark);
+  color: var(--ink);
+  padding: 2px 6px;
+  border-radius: 3px;
+}

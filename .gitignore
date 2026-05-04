@@ -1,0 +1,6 @@
+# gstack runtime / analytics — local-only
+.gstack/
+.context/
+
+# OS
+.DS_Store
