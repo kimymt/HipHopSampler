@@ -1,9 +1,0 @@
-# Cloudflare Pages redirects
-# Currently this is a single-page app with no routes, but the SPA fallback
-# is good hygiene — if a future feature adds /share/abc or /preset/xyz,
-# direct links won't 404.
-#
-# Status 200 (rewrite, not redirect) so the URL stays as the user typed it
-# and React reads it client-side.
-
-/*  /index.html  200
