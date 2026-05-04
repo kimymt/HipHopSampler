@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **本番URL** | https://sampler.mymt.casa |
-| **CF Pages URL** | https://hip-hop-sampler.pages.dev |
+| **CF Pages URL** | https://hiphopsampler.pages.dev |
 | **ホスティング** | Cloudflare Pages |
 | **DNS** | Cloudflare (mymt.casa) |
 
@@ -14,7 +14,7 @@
 - **DNS と同じダッシュボード** で完結 (CNAME 設定が「Add custom domain」ボタン1つ)
 - 帯域 **無制限・無料**
 - Cloudflare の前段に別 CDN を置くと SW キャッシュ問題が起きうるが、Pages なら同社内で完結 → ハマりポイントなし
-- PR ごとに **preview URL** が自動 (`feature-x.hip-hop-sampler.pages.dev` 形式)
+- PR ごとに **preview URL** が自動 (`feature-x.hiphopsampler.pages.dev` 形式)
 - ビルド分 500分/月 (1ビルド30秒なので余裕)
 
 ---
@@ -45,19 +45,19 @@
 
 ### 3. デプロイ完了確認
 
-- `https://hip-hop-sampler.pages.dev` にアクセス → アプリが起動
+- `https://hiphopsampler.pages.dev` にアクセス → アプリが起動
 - DevTools → Application → Service Workers で SW がアクティブ
 - DevTools → Application → Manifest で manifest が読み込まれている
 
 ### 4. カスタムドメイン (`sampler.mymt.casa`)
 
-1. Pages プロジェクト `hip-hop-sampler` → **Custom domains** タブ → **Set up a custom domain**
+1. Pages プロジェクト `hiphopsampler` → **Custom domains** タブ → **Set up a custom domain**
 2. `sampler.mymt.casa` を入力 → **Continue**
 3. Cloudflare が `mymt.casa` ゾーン内に CNAME を自動追加 → 確認画面 → **Activate domain**
 4. SSL 証明書発行を待つ (~30秒〜2分)
-5. 完了後、`https://sampler.mymt.casa` でアクセス可能。`hip-hop-sampler.pages.dev` も併存
+5. 完了後、`https://sampler.mymt.casa` でアクセス可能。`hiphopsampler.pages.dev` も併存
 
-> `mymt.casa` が既に Cloudflare DNS に乗っているため、外部 DNS の手作業は一切不要。Pages がレコードを自動追加 (CNAME `sampler` → `hip-hop-sampler.pages.dev`)。
+> `mymt.casa` が既に Cloudflare DNS に乗っているため、外部 DNS の手作業は一切不要。Pages がレコードを自動追加 (CNAME `sampler` → `hiphopsampler.pages.dev`)。
 
 ---
 
@@ -76,7 +76,7 @@ git push -u origin feature/effects-reverb
 gh pr create
 ```
 
-PR 作成と同時に Cloudflare が `feature-effects-reverb.hip-hop-sampler.pages.dev` を自動生成。実機モバイルで触りたい時もこの URL から。
+PR 作成と同時に Cloudflare が `feature-effects-reverb.hiphopsampler.pages.dev` を自動生成。実機モバイルで触りたい時もこの URL から。
 
 ---
 
@@ -87,10 +87,12 @@ PR 作成と同時に Cloudflare が `feature-effects-reverb.hip-hop-sampler.pag
 | ファイル | 役割 |
 |---------|------|
 | `sampler-tool/public/_headers` | キャッシュ + セキュリティヘッダー (PWA SW を no-cache にするのが重要) |
-| `sampler-tool/public/_redirects` | SPA fallback (将来 routes 追加時の保険) |
+| `sampler-tool/.npmrc` | `legacy-peer-deps=true` — vite-plugin-pwa の peer range 遅れ対策 |
 | `sampler-tool/vite.config.js` | Vite + vite-plugin-pwa の生成設定 |
 
-ビルド時、`public/` の中身は `dist/` ルートに丸ごとコピーされる。Cloudflare Pages はデプロイ時に `_headers` と `_redirects` を自動認識する。
+ビルド時、`public/` の中身は `dist/` ルートに丸ごとコピーされる。Cloudflare Pages はデプロイ時に `_headers` を自動認識する。
+
+> SPA fallback (`_redirects` の `/*  /index.html  200`) は当初配置していたが、Cloudflare の「Infinite loop detected」誤検出で無視されるため削除。現状 routes が無いので問題なし。将来 routes を追加する場合は、より特定的なパターン (例: `/share/*  /index.html  200`) を採用する。
 
 ---
 

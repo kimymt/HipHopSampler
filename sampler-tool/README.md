@@ -1,6 +1,6 @@
 # Hip Hop Sampler
 
-🎛 **本番**: https://sampler.mymt.casa
+🎛 **本番**: https://sampler.mymt.casa (CF Pages: https://hiphopsampler.pages.dev)
 
 DAW (Music Production Software) で挫折した未経験者でも、30分でビートが作れるブラウザベースのサンプリングツール。
 
