@@ -1,0 +1,109 @@
+.bottom-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9200;
+  pointer-events: none;
+}
+
+.bottom-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 16, 12, 0.4);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.bottom-sheet-card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, var(--bone-light), var(--bone));
+  border-top: 1px solid var(--bone-darker);
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  box-shadow: 0 -10px 36px rgba(20, 16, 12, 0.55);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: sheet-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bottom-sheet-card.half {
+  height: 60vh;
+  max-height: 480px;
+}
+
+.bottom-sheet-card.full {
+  height: 92vh;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-sheet-card {
+    animation: none;
+    transition: none;
+  }
+}
+
+.bottom-sheet-handle-area {
+  padding: 8px 0 4px;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-handle-area:active {
+  cursor: grabbing;
+}
+
+.bottom-sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--bone-darker);
+  border-radius: 2px;
+  margin: 0 auto;
+}
+
+.bottom-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 18px 10px;
+  border-bottom: 1px solid var(--bone-darker);
+  flex-shrink: 0;
+}
+
+.bottom-sheet-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--ink);
+}
+
+.bottom-sheet-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-soft);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-sheet-body {
+  padding: 14px 18px 24px;
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+}

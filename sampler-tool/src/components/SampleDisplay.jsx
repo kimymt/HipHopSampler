@@ -169,7 +169,7 @@ export const SampleDisplay = ({
     return ((clientX - rect.left) / rect.width) * canvas.width;
   };
 
-  const handleMouseDown = (e) => {
+  const handlePointerDown = (e) => {
     if (!sample || !sample.buffer) return;
     const canvas = canvasRef.current;
     const startPx = (sample.startTime / sample.buffer.duration) * canvas.width;
@@ -209,11 +209,13 @@ export const SampleDisplay = ({
       }
     };
     const onUp = () => setDragging(null);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
     };
   }, [dragging, sample, onTrim]);
 
@@ -224,11 +226,13 @@ export const SampleDisplay = ({
       onChopBoundaryDrag?.(draggingChop, t);
     };
     const onUp = () => setDraggingChop(null);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
     };
   }, [draggingChop, sample, onChopBoundaryDrag]);
 
@@ -279,8 +283,11 @@ export const SampleDisplay = ({
         ref={canvasRef}
         width={800}
         height={90}
-        onMouseDown={handleMouseDown}
-        style={{ cursor: dragging || draggingChop != null ? 'ew-resize' : 'default' }}
+        onPointerDown={handlePointerDown}
+        style={{
+          cursor: dragging || draggingChop != null ? 'ew-resize' : 'default',
+          touchAction: 'none',
+        }}
       />
 
       <div className="loop-controls">

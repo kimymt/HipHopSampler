@@ -63,3 +63,30 @@
   text-align: center;
   letter-spacing: 0.5px;
 }
+
+/* ===== Mobile (< 768px) — single column, pad grid first, sequencer below ===== */
+@media (max-width: 767px) {
+  .app-main {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  /* The hint text comes right after the grid; tighten spacing */
+  .hint-text {
+    font-size: 9px;
+  }
+
+  .pad-grid-wrap {
+    width: 100%;
+  }
+}

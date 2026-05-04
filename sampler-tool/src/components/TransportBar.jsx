@@ -1,6 +1,7 @@
 import React from 'react';
 import { InstallButton } from './InstallButton';
 import { StorageBadge } from './StorageBadge';
+import { useIsMobile } from '../hooks/useMediaQuery';
 import './TransportBar.css';
 
 export const TransportBar = ({
@@ -15,14 +16,17 @@ export const TransportBar = ({
   canInstall,
   onInstallClick,
   storageInfo,
+  onSettingsClick,
 }) => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="transport-bar">
+    <div className={`transport-bar ${isMobile ? 'tight' : ''}`}>
       <div className="transport-section logo-section">
         <div className="logo-mark">▣</div>
         <div className="logo-text">
-          <div className="logo-title">HIP HOP SAMPLER</div>
-          <div className="logo-sub">v0.1 · prototype</div>
+          <div className="logo-title">{isMobile ? 'HHS' : 'HIP HOP SAMPLER'}</div>
+          {!isMobile && <div className="logo-sub">v0.1 · prototype</div>}
         </div>
       </div>
 
@@ -31,21 +35,28 @@ export const TransportBar = ({
           className={`transport-btn play ${isPlaying ? 'active' : ''}`}
           onClick={onPlayToggle}
           title="Play / Stop"
+          aria-label={isPlaying ? 'Stop' : 'Play'}
         >
           {isPlaying ? '■' : '▶'}
         </button>
-        <button
-          className={`transport-btn record ${isRecording ? 'active' : ''}`}
-          onClick={onRecordToggle}
-          title="Record pattern"
-        >
-          ●
-        </button>
+        {!isMobile && (
+          <button
+            className={`transport-btn record ${isRecording ? 'active' : ''}`}
+            onClick={onRecordToggle}
+            title="Record pattern"
+            aria-label="Record"
+          >
+            ●
+          </button>
+        )}
 
         <div className="bpm-control">
-          <label>BPM</label>
+          <label htmlFor="bpm-input">BPM</label>
           <input
+            id="bpm-input"
             type="number"
+            inputMode="numeric"
+            pattern="[0-9]*"
             min="60"
             max="200"
             value={bpm}
@@ -64,18 +75,35 @@ export const TransportBar = ({
         </div>
         <div className={`status-led ${isPlaying ? 'on' : ''}`}>
           <span className="led-dot"></span>
-          <span>{isPlaying ? 'PLAYING' : 'IDLE'}</span>
+          <span>{isPlaying ? 'PLAY' : 'IDLE'}</span>
         </div>
-        <StorageBadge info={storageInfo} />
-        <InstallButton canInstall={canInstall} onClick={onInstallClick} />
-        <button
-          className="tour-help-btn"
-          onClick={onHelpClick}
-          title="ツアーを再生"
-          aria-label="Show tour"
-        >
-          ?
-        </button>
+
+        {/* Desktop: inline. Mobile: hidden, accessible via ⚙ settings sheet. */}
+        {!isMobile && (
+          <>
+            <StorageBadge info={storageInfo} />
+            <InstallButton canInstall={canInstall} onClick={onInstallClick} />
+            <button
+              className="tour-help-btn"
+              onClick={onHelpClick}
+              title="ツアーを再生"
+              aria-label="Show tour"
+            >
+              ?
+            </button>
+          </>
+        )}
+
+        {isMobile && (
+          <button
+            className="settings-btn"
+            onClick={onSettingsClick}
+            title="設定"
+            aria-label="Settings"
+          >
+            ⚙
+          </button>
+        )}
       </div>
     </div>
   );
