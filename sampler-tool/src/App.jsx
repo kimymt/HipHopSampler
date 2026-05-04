@@ -9,7 +9,10 @@ import { Tour } from './components/Tour';
 import { IosInstallGuide } from './components/IosInstallGuide';
 import { UpdateToast } from './components/UpdateToast';
 import { StartupLoader } from './components/StartupLoader';
+import { BottomSheet } from './components/BottomSheet';
+import { SettingsSheet } from './components/SettingsSheet';
 import { useAudioContext } from './hooks/useAudioContext';
+import { useIsMobile } from './hooks/useMediaQuery';
 import { usePWA } from './hooks/usePWA';
 import { useAudioEngine } from './hooks/useAudioEngine';
 import { usePersistedSamples } from './hooks/usePersistedSamples';
@@ -50,7 +53,10 @@ export default function App() {
   const [currentStep, setCurrentStep] = useState(-1);
   const [tourOpen, setTourOpen] = useState(false);
   const [chopMessage, setChopMessage] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sampleSheetOpen, setSampleSheetOpen] = useState(false);
   const pwa = usePWA();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!localStorage.getItem(TOUR_FLAG)) {
@@ -78,6 +84,12 @@ export default function App() {
     }
     setSelectedPadId(padId);
 
+    // On mobile, opening the sample sheet only when the pad has audio.
+    // Empty pads don't open the sheet — the "+" button on the pad handles file pick.
+    if (isMobile && sample?.buffer) {
+      setSampleSheetOpen(true);
+    }
+
     if (isRecording && currentStep >= 0) {
       setPatterns((prev) => {
         const cur = prev[padId] || new Array(16).fill(false);
@@ -86,6 +98,12 @@ export default function App() {
         return { ...prev, [padId]: next };
       });
     }
+  };
+
+  const handlePadFilePicked = (padId, file) => {
+    initAudioContext();
+    setSelectedPadId(padId);
+    loadSample(padId, file);
   };
 
   const handleToggleStep = (stepIdx) => {
@@ -237,6 +255,38 @@ export default function App() {
   const selectedPattern = selectedPadId ? patterns[selectedPadId] : null;
   const loadedCount = Object.values(samples).filter((s) => s && s.buffer).length;
 
+  const samplePanel = (
+    <>
+      <SampleDisplay
+        sample={selectedSample}
+        chopBoundaries={chopBoundaries}
+        onChopBoundaryDrag={handleBoundaryDrag}
+        onTrim={(start, end) => {
+          updateSampleProperty(selectedPadId, 'startTime', start);
+          updateSampleProperty(selectedPadId, 'endTime', end);
+        }}
+        onLoopStart={handleLoopStart}
+        onLoopStop={stopAll}
+        onSetIn={handleSetIn}
+        onSetOut={handleSetOut}
+      />
+      <Mixer
+        sample={selectedSample}
+        padId={selectedPadId}
+        onVolumeChange={(v) => updateSampleProperty(selectedPadId, 'volume', v)}
+        onPanChange={(p) => updateSampleProperty(selectedPadId, 'pan', p)}
+        onRemove={() => {
+          stopAll();
+          removeSample(selectedPadId);
+          setSelectedPadId(null);
+          setSampleSheetOpen(false);
+        }}
+        onAutoChop={handleAutoChop}
+        chopMessage={chopMessage}
+      />
+    </>
+  );
+
   return (
     <FileDropZone onFileDrop={handleFileDrop}>
       <div className="app">
@@ -252,6 +302,7 @@ export default function App() {
           canInstall={pwa.canInstall}
           onInstallClick={pwa.promptInstall}
           storageInfo={storageInfo}
+          onSettingsClick={() => setSettingsOpen(true)}
         />
 
         <main className="app-main">
@@ -265,44 +316,24 @@ export default function App() {
                 samples={samples}
                 onPadClick={handlePadClick}
                 selectedPadId={selectedPadId}
+                onPadFilePicked={handlePadFilePicked}
               />
               <div className="hint-text">
-                Drag &amp; drop audio files (WAV / MP3) onto a selected pad
+                {isMobile
+                  ? 'パッドの "+" でファイル選択 · パッドタップで再生・編集'
+                  : 'Drag & drop audio files (WAV / MP3) onto a selected pad'}
               </div>
             </section>
 
-            <section className="workspace-right">
-              <div className="section-label">
-                <span className="dot"></span>
-                SAMPLE
-              </div>
-              <SampleDisplay
-                sample={selectedSample}
-                chopBoundaries={chopBoundaries}
-                onChopBoundaryDrag={handleBoundaryDrag}
-                onTrim={(start, end) => {
-                  updateSampleProperty(selectedPadId, 'startTime', start);
-                  updateSampleProperty(selectedPadId, 'endTime', end);
-                }}
-                onLoopStart={handleLoopStart}
-                onLoopStop={stopAll}
-                onSetIn={handleSetIn}
-                onSetOut={handleSetOut}
-              />
-              <Mixer
-                sample={selectedSample}
-                padId={selectedPadId}
-                onVolumeChange={(v) => updateSampleProperty(selectedPadId, 'volume', v)}
-                onPanChange={(p) => updateSampleProperty(selectedPadId, 'pan', p)}
-                onRemove={() => {
-                  stopAll();
-                  removeSample(selectedPadId);
-                  setSelectedPadId(null);
-                }}
-                onAutoChop={handleAutoChop}
-                chopMessage={chopMessage}
-              />
-            </section>
+            {!isMobile && (
+              <section className="workspace-right">
+                <div className="section-label">
+                  <span className="dot"></span>
+                  SAMPLE
+                </div>
+                {samplePanel}
+              </section>
+            )}
           </div>
 
           <section className="workspace-bottom">
@@ -317,6 +348,28 @@ export default function App() {
           </section>
         </main>
       </div>
+
+      {isMobile && (
+        <BottomSheet
+          open={sampleSheetOpen && !!selectedSample?.buffer}
+          onClose={() => setSampleSheetOpen(false)}
+          title={selectedSample ? `SAMPLE · PAD ${selectedPadId}` : 'SAMPLE'}
+        >
+          {samplePanel}
+        </BottomSheet>
+      )}
+
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        isRecording={isRecording}
+        onRecordToggle={() => setIsRecording((r) => !r)}
+        canInstall={pwa.canInstall}
+        onInstallClick={pwa.promptInstall}
+        onHelpClick={() => setTourOpen(true)}
+        storageInfo={storageInfo}
+      />
+
       <Tour open={tourOpen} onClose={handleTourClose} />
       <StartupLoader
         status={restoreState.status}
