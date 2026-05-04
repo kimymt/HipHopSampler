@@ -8,13 +8,16 @@ import { Mixer } from './components/Mixer';
 import { Tour } from './components/Tour';
 import { IosInstallGuide } from './components/IosInstallGuide';
 import { UpdateToast } from './components/UpdateToast';
+import { StartupLoader } from './components/StartupLoader';
 import { useAudioContext } from './hooks/useAudioContext';
 import { usePWA } from './hooks/usePWA';
 import { useAudioEngine } from './hooks/useAudioEngine';
-import { useSampleBuffer } from './hooks/useSampleBuffer';
+import { usePersistedSamples } from './hooks/usePersistedSamples';
 import { useSequencer } from './hooks/useSequencer';
 import { usePersistedState } from './hooks/usePersistence';
+import { useStorageQuota } from './hooks/useStorageQuota';
 import { detectOnsets, buildSlicePoints } from './utils/onsetDetect';
+import { clearAll } from './utils/sampleStore';
 import './App.css';
 
 const TOUR_FLAG = 'sampler.tour.completed';
@@ -30,13 +33,15 @@ export default function App() {
   const { trigger, loopTrim, stopAll } = useAudioEngine(initAudioContext);
   const {
     samples,
+    restoreState,
     loadSample,
     getSample,
     updateSampleProperty,
     updateMany,
     setSample,
     removeSample,
-  } = useSampleBuffer(initAudioContext);
+  } = usePersistedSamples(initAudioContext);
+  const storageInfo = useStorageQuota();
   const [selectedPadId, setSelectedPadId] = useState(null);
   const [bpm, setBpm] = usePersistedState('bpm', 90);
   const [patterns, setPatterns] = usePersistedState('patterns', {});
@@ -162,10 +167,13 @@ export default function App() {
 
     const groupId = `chop-${Date.now().toString(36)}`;
     const baseName = selectedSample.name;
+    // Siblings share the source bytes — propagate sourceId so restore works.
+    const sourceId = selectedSample.sourceId;
     const updates = {};
     targets.forEach((padId, idx) => {
       updates[padId] = {
         buffer,
+        sourceId,
         name: idx === 0 ? baseName : `${baseName} #${idx + 1}`,
         startTime: points[idx],
         endTime: points[idx + 1],
@@ -243,6 +251,7 @@ export default function App() {
           onHelpClick={() => setTourOpen(true)}
           canInstall={pwa.canInstall}
           onInstallClick={pwa.promptInstall}
+          storageInfo={storageInfo}
         />
 
         <main className="app-main">
@@ -309,6 +318,17 @@ export default function App() {
         </main>
       </div>
       <Tour open={tourOpen} onClose={handleTourClose} />
+      <StartupLoader
+        status={restoreState.status}
+        progress={restoreState.progress}
+        total={restoreState.total}
+        error={restoreState.error}
+        onRetry={() => window.location.reload()}
+        onClear={async () => {
+          await clearAll();
+          window.location.reload();
+        }}
+      />
       <IosInstallGuide open={pwa.showIosGuide} onClose={pwa.dismissIosGuide} />
       <UpdateToast
         needRefresh={pwa.needRefresh}

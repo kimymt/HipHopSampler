@@ -1,5 +1,6 @@
 import React from 'react';
 import { InstallButton } from './InstallButton';
+import { StorageBadge } from './StorageBadge';
 import './TransportBar.css';
 
 export const TransportBar = ({
@@ -13,6 +14,7 @@ export const TransportBar = ({
   onHelpClick,
   canInstall,
   onInstallClick,
+  storageInfo,
 }) => {
   return (
     <div className="transport-bar">
@@ -64,6 +66,7 @@ export const TransportBar = ({
           <span className="led-dot"></span>
           <span>{isPlaying ? 'PLAYING' : 'IDLE'}</span>
         </div>
+        <StorageBadge info={storageInfo} />
         <InstallButton canInstall={canInstall} onClick={onInstallClick} />
         <button
           className="tour-help-btn"
