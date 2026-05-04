@@ -32,12 +32,14 @@
 
 | 項目 | 値 |
 |------|---|
-| Project name | `hip-hop-sampler` |
+| Project name | `hiphopsampler` |
 | Production branch | `main` |
-| Framework preset | `Vite` |
+| **Framework preset** | **`None`** ← Vite は preset 不要、手動指定 |
 | **Root directory** | **`sampler-tool`** ← 重要 (リポジトリのサブフォルダ) |
 | Build command | `npm install && npm run build` |
 | Build output directory | `dist` |
+
+> Cloudflare Pages の Framework preset リストに「Vite」は無い。Vite は単なるビルドツールでフレームワークではないため。`None` を選んで Build command と Output directory を手動入力すれば同じ結果。<br>(SvelteKit / VitePress 等の preset は、内部で Vite を使う「フレームワーク」だから出ている)
 
 **Save and Deploy** をクリック。初回ビルド ~1分。
 
