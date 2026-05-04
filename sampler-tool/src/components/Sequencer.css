@@ -143,3 +143,51 @@
 .step.beat .step-num {
   color: #9a9080;
 }
+
+/* ===== Mobile: Bar tabs + 4-step grid ===== */
+.seq-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.seq-tab {
+  flex: 1;
+  padding: 8px 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--ink-muted);
+  background: linear-gradient(180deg, #2a2520, #1a1612);
+  border: 1px solid #3a3328;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.seq-tab.active {
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  border-color: var(--te-orange-dark);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(240, 74, 31, 0.4);
+}
+
+@media (max-width: 767px) {
+  .sequencer.mobile {
+    border-radius: 10px;
+  }
+
+  .sequencer.mobile .sequencer-grid.mobile-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .sequencer.mobile .step {
+    min-height: 64px;
+  }
+
+  .sequencer.mobile .step-num {
+    font-size: 10px;
+  }
+}
