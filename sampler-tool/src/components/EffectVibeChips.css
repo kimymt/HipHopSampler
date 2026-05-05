@@ -1,0 +1,119 @@
+/* EffectVibeChips — DESIGN.md §9.15
+ *
+ * Horizontal scroll chip row above effect-type-row. Chip-first UI (no text
+ * input — Phase 2A ships chip-only).
+ */
+
+.effect-vibe-chips {
+  position: relative;
+  margin-bottom: 8px;
+  /* Both-side fade mask signals "more chips off-screen". */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 14px,
+    #000 calc(100% - 14px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 14px,
+    #000 calc(100% - 14px),
+    transparent 100%
+  );
+}
+
+.effect-vibe-chips-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 12px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.effect-vibe-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.effect-vibe-chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  /* §9.15: desktop 40×60min */
+  min-width: 60px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 6px;
+  /* §9.15 ラベル排版: 日本語 Sans 13px / 700 (mono の例外、判読性優先) */
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  /* idle: bone-light → bone gradient + ink-soft text */
+  background: linear-gradient(180deg, var(--bone-light), var(--bone));
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  /* §6 凸 (raised) */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(60, 50, 30, 0.2);
+  /* §7 motion 100ms */
+  transition: transform 0.1s ease, border-color 0.1s ease, color 0.1s ease,
+    box-shadow 0.1s ease, background 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.effect-vibe-chip:hover {
+  border-color: var(--ink-muted);
+  color: var(--ink-soft);
+  transform: translateY(-1px);
+}
+
+.effect-vibe-chip:active {
+  /* §7 「物理的感」: scale 0.96 60ms */
+  transform: scale(0.96);
+  transition-duration: 0.06s;
+}
+
+.effect-vibe-chip:focus-visible {
+  outline: 2px solid var(--te-orange);
+  outline-offset: 2px;
+}
+
+.effect-vibe-chip.is-active {
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  border-color: var(--te-orange-dark);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.5),
+    0 0 12px rgba(240, 74, 31, 0.4);
+}
+
+@media (hover: none), (pointer: coarse) {
+  /* §9.15: モバイル 38×60min。タップターゲット 44×44 は内側 padding 込みで満たす */
+  .effect-vibe-chip {
+    height: 38px;
+    min-width: 60px;
+    padding: 0 16px;
+    font-size: 13px;
+  }
+  .effect-vibe-chips-scroll {
+    padding: 6px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effect-vibe-chip,
+  .effect-vibe-chip:hover,
+  .effect-vibe-chip:active {
+    transition: none;
+    transform: none;
+  }
+}
