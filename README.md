@@ -31,6 +31,17 @@ Teenage Engineering EP-133 / Akai MPC 風の UI で、Web Audio API ベース。
 - **ライブ録音** — Record + Play 同時押しで、叩いた瞬間がパターンに記録される
 - パッドは `1234 / QWER / ASDF / ZXCV` のキーボードショートカットでも演奏可能
 
+### マスター FX
+全パッドの出力に1つだけかけられるグローバルエフェクト。SP-404 / EP-133 流の "1スロット + ワンノブ" 設計で、DAW 経験がなくても触りやすい構成にしています。
+
+- 🌌 **Reverb** — 部屋の広がり (狭い → ホール)
+- 🔁 **Delay** — BPM 同期のやまびこ (1/16・1/8・1/8.・1/4・1/4. の 5 段階)
+- 🎚 **Filter** — Low-pass ↔ High-pass 切替 (モコモコ → ハッキリ)
+- 🔥 **Saturation** — アナログ風の温かい歪み (薄い → 濃い)
+- 📼 **Lo-fi** — カセットテープ風の劣化 (BitCrusher AudioWorklet)
+- **WET / PARAM の 2 ノブ** + **BYPASS** で原音と切り替え比較
+- 設定は localStorage に自動保存、リロード後も復元
+
 ### PWA (Progressive Web App)
 - ホーム画面に追加でスタンドアロン起動
 - オフライン動作 (Service Worker precache)
@@ -46,15 +57,20 @@ Teenage Engineering EP-133 / Akai MPC 風の UI で、Web Audio API ベース。
 - ✅ PWA Phase 1-4 (manifest / SW / IndexedDB / mobile / lifecycle)
 - ✅ AUTO CHOP (onset detection)
 - ✅ マイク録音 + 録音 UI
-- ✅ TypeScript 完全移行 + Vitest テスト基盤 (51 tests)
+- ✅ TypeScript 完全移行 + Vitest テスト基盤 (75 tests)
 - ✅ オーディオレイテンシ計測
+- ✅ **マスター FX Phase 1** — Reverb / Delay / Filter / Saturation / Lo-fi
 
 ### 検討中 (P2 機能追加)
-- [ ] **エフェクト** — リバーブ / ディレイ / ローパスフィルタ (Web Audio Effects)
+- [ ] **AI エフェクト指示 (Phase 2A)** — 「もっとローファイに」「水中っぽく」と入力して FX を自動設定 (キーワード辞書方式、全プラットフォーム動作・$0)
+- [ ] **AI エフェクト指示 (Phase 2B)** — WebLLM (Qwen 2.5 0.5B) でブラウザ内ローカル LLM、より柔軟な自然言語入力 (Chrome / Android、要 WebGPU)
 - [ ] **複数バンク** — A/B/C/D で 64 パッド相当を切替
 - [ ] **WAV エクスポート** — `OfflineAudioContext` で全パッド + シーケンサーをミックスダウン
 - [ ] **MIDI 入力対応** — Web MIDI API でハードウェアコントローラから演奏
 - [ ] **クラウド保存** — 複数デバイス間でパターン同期 (要バックエンド)
+
+### 将来 (要技術成熟待ち)
+- [ ] **AI 音声直接変換 (Phase 3)** — Stable Audio Open Small 等のオンデバイス音声生成 AI で「水中っぽくして」をサンプル音そのものに適用。2027 頃 (transformers.js の audio diffusion 対応 + iOS Safari WebGPU 完全展開を待ち)
 
 詳細は [`sampler-tool/ROADMAP.md`](sampler-tool/ROADMAP.md) を参照してください。
 
