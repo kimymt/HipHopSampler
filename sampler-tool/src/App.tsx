@@ -11,6 +11,7 @@ import { UpdateToast } from './components/UpdateToast';
 import { StartupLoader } from './components/StartupLoader';
 import { BottomSheet } from './components/BottomSheet';
 import { SettingsSheet } from './components/SettingsSheet';
+import { useWebLLM } from './hooks/useWebLLM';
 import { AudioGate } from './components/AudioGate';
 import { OfflineBadge } from './components/OfflineBadge';
 import { useAudioContext } from './hooks/useAudioContext';
@@ -72,6 +73,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sampleSheetOpen, setSampleSheetOpen] = useState(false);
   const pwa = usePWA();
+  const ai = useWebLLM();
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -374,6 +376,8 @@ export default function App() {
         onHelpClick={() => setTourOpen(true)}
         storageInfo={storageInfo}
         audioContext={audioContext}
+        ai={{ state: ai.state, optIn: ai.optIn }}
+        onAiToggle={ai.setOptedIn}
       />
 
       <Tour open={tourOpen} onClose={handleTourClose} />
