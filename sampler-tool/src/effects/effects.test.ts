@@ -152,6 +152,12 @@ describe('createReverb', () => {
 });
 
 describe('createDelay', () => {
+  // Helper: pull out the most-recently-set delay time from setTargetAtTime calls.
+  const lastDelaySec = (delayNode: any): number => {
+    const calls = delayNode.delayTime.setTargetAtTime.mock.calls;
+    return calls.length ? calls[calls.length - 1][0] : delayNode.delayTime.value;
+  };
+
   it('exposes setBpm in addition to standard EffectNode methods', () => {
     const d = createDelay(ctx, 90);
     expect(typeof d.setBpm).toBe('function');
@@ -160,7 +166,6 @@ describe('createDelay', () => {
 
   it('setParam updates the underlying delay time', () => {
     const d = createDelay(ctx, 120);
-    // Find the delay node in the graph (returned by ctx.createDelay)
     const delayCalls = ctx.createDelay.mock.results;
     const delayNode = delayCalls[delayCalls.length - 1].value;
     const callsBefore = delayNode.delayTime.setTargetAtTime.mock.calls.length;
@@ -170,9 +175,87 @@ describe('createDelay', () => {
 
   it('setBpm clamps to a sane range', () => {
     const d = createDelay(ctx, 90);
-    // No throw at extreme values
     expect(() => d.setBpm(-100)).not.toThrow();
     expect(() => d.setBpm(99999)).not.toThrow();
+  });
+
+  // ── BPM-sync correctness ──────────────────────────────────────────────
+  // The delay must produce delay-time values that match musical
+  // subdivisions of the current BPM. Whole note = 4 beats, so each
+  // subdivision (1/16, 1/8, 1/8., 1/4, 1/4.) maps to:
+  //   delaySec = (60 / bpm) * 4 * subdivision_ratio
+
+  it('BPM 120, TIME=0 → 1/16 subdivision = 125ms', () => {
+    const d = createDelay(ctx, 120);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.0);
+    expect(lastDelaySec(delayNode)).toBeCloseTo(0.125, 4);
+  });
+
+  it('BPM 120, TIME=0.3 → 1/8 = 250ms', () => {
+    const d = createDelay(ctx, 120);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.3);
+    expect(lastDelaySec(delayNode)).toBeCloseTo(0.25, 4);
+  });
+
+  it('BPM 120, TIME=0.5 → 1/8 dotted = 375ms', () => {
+    const d = createDelay(ctx, 120);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.5);
+    expect(lastDelaySec(delayNode)).toBeCloseTo(0.375, 4);
+  });
+
+  it('BPM 120, TIME=0.7 → 1/4 = 500ms', () => {
+    const d = createDelay(ctx, 120);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.7);
+    expect(lastDelaySec(delayNode)).toBeCloseTo(0.5, 4);
+  });
+
+  it('BPM 120, TIME=0.95 → 1/4 dotted = 750ms', () => {
+    const d = createDelay(ctx, 120);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.95);
+    expect(lastDelaySec(delayNode)).toBeCloseTo(0.75, 4);
+  });
+
+  it('halving BPM doubles the delay time at the same TIME setting', () => {
+    const d = createDelay(ctx, 120);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.7); // 1/4 note
+    const at120 = lastDelaySec(delayNode); // 0.5s
+    d.setBpm(60);
+    const at60 = lastDelaySec(delayNode); // expected 1.0s
+    expect(at60).toBeCloseTo(at120 * 2, 4);
+    expect(at60).toBeCloseTo(1.0, 4);
+  });
+
+  it('doubling BPM halves the delay time at the same TIME setting', () => {
+    const d = createDelay(ctx, 90);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.5); // 1/8 dotted
+    const at90 = lastDelaySec(delayNode); // (60/90)*4*(0.1875) = 0.5
+    d.setBpm(180);
+    const at180 = lastDelaySec(delayNode); // 0.25
+    expect(at180).toBeCloseTo(at90 / 2, 4);
+    expect(at180).toBeCloseTo(0.25, 4);
+  });
+
+  it('BPM 60 + TIME=0.7 (1/4) → exactly 1 second', () => {
+    const d = createDelay(ctx, 60);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(0.7);
+    expect(lastDelaySec(delayNode)).toBeCloseTo(1.0, 4);
+  });
+
+  it('all subdivisions stay within DelayNode max time (2 seconds)', () => {
+    // Slowest case: 1/4 dotted at the lowest sane BPM (60) =
+    //   (60/60) * 4 * 0.375 = 1.5s. Must be < 2s ceiling.
+    const d = createDelay(ctx, 60);
+    const delayNode = ctx.createDelay.mock.results.at(-1).value;
+    d.setParam(1.0);
+    expect(lastDelaySec(delayNode)).toBeLessThan(2.0);
   });
 });
 
