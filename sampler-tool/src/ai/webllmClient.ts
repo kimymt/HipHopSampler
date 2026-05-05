@@ -86,12 +86,70 @@ type AnyEngine = {
 let enginePromise: Promise<AnyEngine> | null = null;
 let engine: AnyEngine | null = null;
 
+/** Adapter pre-check timeout. iOS Safari occasionally hangs the call. */
+const ADAPTER_CHECK_TIMEOUT_MS = 10_000;
+/** Full load timeout — must cover 300MB download on slow mobile (~5 min @ 1 MB/s). */
+const FULL_LOAD_TIMEOUT_MS = 5 * 60 * 1000;
+/** Stall watchdog — if no progress callback fires for this long during load, abort. */
+const STALL_TIMEOUT_MS = 60_000;
+
+const promiseTimeout = <T>(p: Promise<T>, ms: number, label: string): Promise<T> =>
+  Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(label)), ms),
+    ),
+  ]);
+
+/**
+ * Verify a WebGPU adapter is actually usable. detectWebLLMSupport() only
+ * checks `navigator.gpu` exists — but the browser may expose the namespace
+ * without a working adapter (headless Chromium on macOS, machines without a
+ * GPU, sandbox restrictions). This call is async and may prompt for hardware
+ * access on some browsers, so we only run it when the user has opted in.
+ */
+const verifyAdapter = async (): Promise<void> => {
+  type GPULike = { requestAdapter: () => Promise<unknown> };
+  const gpu = (navigator as Navigator & { gpu?: GPULike }).gpu;
+  if (!gpu) {
+    throw new Error('WebGPU が利用できません。Chrome / Edge / Android Chrome をお試しください。');
+  }
+  let adapter: unknown;
+  try {
+    adapter = await promiseTimeout(
+      gpu.requestAdapter(),
+      ADAPTER_CHECK_TIMEOUT_MS,
+      'GPU 確認がタイムアウトしました',
+    );
+  } catch (err) {
+    throw new Error(
+      err instanceof Error
+        ? `GPU の準備に失敗: ${err.message}`
+        : 'GPU の準備に失敗しました',
+    );
+  }
+  if (!adapter) {
+    throw new Error(
+      'GPU アダプタが取得できません。デスクトップ Chrome / Edge をお試しください (一部の環境では WebGPU が無効化されています)。',
+    );
+  }
+};
+
 /**
  * Initialize the engine. Idempotent: subsequent calls return the same engine.
  * Progress callback fires for download bytes and shader compile stages.
  *
  * The dynamic import is intentional — keeps the @mlc-ai/web-llm code out of
  * the main app bundle for users who never enable AI suggestions.
+ *
+ * Three failure modes the caller can rely on:
+ *   1. Adapter pre-check fails → throws within ~10s with a usable message
+ *   2. Stall during load (no progress for 60s) → throws with stall message
+ *   3. Total load exceeds 5 min → throws with timeout message
+ *
+ * Without these, a missing GPU adapter or stuck download would leave the
+ * UI hanging at "0%" indefinitely (caught in production verification of
+ * v0.2.0.0 on a headless Chromium).
  */
 export const loadWebLLM = async (
   onProgress?: (progress: number, text: string) => void,
@@ -100,16 +158,59 @@ export const loadWebLLM = async (
   if (enginePromise) return enginePromise;
 
   enginePromise = (async () => {
-    // Late import so the library never enters the main chunk.
+    // 1. Verify adapter BEFORE downloading 300MB. Fast-fail path.
+    await verifyAdapter();
+
+    // 2. Stall watchdog: each progress callback resets the timer. If 60s pass
+    //    with no progress, the inner promise rejects.
+    let lastProgressAt = Date.now();
+    let stallTimer: ReturnType<typeof setTimeout> | null = null;
+    const stallController: { rejected: boolean; rejectFn?: (e: Error) => void } = { rejected: false };
+
+    const stallPromise = new Promise<never>((_, reject) => {
+      stallController.rejectFn = reject;
+      const tick = () => {
+        if (stallController.rejected) return;
+        const elapsed = Date.now() - lastProgressAt;
+        if (elapsed >= STALL_TIMEOUT_MS) {
+          stallController.rejected = true;
+          reject(new Error('ダウンロードが進みません。ネットワークを確認してから再試行してください。'));
+          return;
+        }
+        stallTimer = setTimeout(tick, Math.max(1000, STALL_TIMEOUT_MS - elapsed));
+      };
+      stallTimer = setTimeout(tick, STALL_TIMEOUT_MS);
+    });
+
+    // 3. Late import so the library never enters the main chunk.
     const webllm = await import('@mlc-ai/web-llm');
-    const created = await webllm.CreateMLCEngine(WEBLLM_MODEL_ID, {
+    const enginePromiseInner = webllm.CreateMLCEngine(WEBLLM_MODEL_ID, {
       initProgressCallback: (report) => {
+        lastProgressAt = Date.now();
         // report: { progress: 0..1, text: string, timeElapsed: number }
         onProgress?.(report.progress, report.text);
       },
     });
-    engine = created as unknown as AnyEngine;
-    return engine;
+
+    // 4. Race engine init against stall + full timeout. Whichever loses, we
+    //    bail out and surface a real error to the UI instead of hanging.
+    try {
+      const created = await Promise.race([
+        enginePromiseInner,
+        stallPromise,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('読み込みが時間切れになりました。ページを再読み込みしてください。')),
+            FULL_LOAD_TIMEOUT_MS,
+          ),
+        ),
+      ]);
+      engine = created as unknown as AnyEngine;
+      return engine;
+    } finally {
+      stallController.rejected = true;
+      if (stallTimer) clearTimeout(stallTimer);
+    }
   })().catch((err) => {
     enginePromise = null; // allow retry on next load() call
     throw err;
