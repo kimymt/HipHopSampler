@@ -26,6 +26,10 @@ import { usePersistedState } from './hooks/usePersistence';
 import { useStorageQuota } from './hooks/useStorageQuota';
 import { useAutoChop } from './hooks/useAutoChop';
 import { useChopGroups } from './hooks/useChopGroups';
+import { useEffects } from './hooks/useEffects';
+import { DEFAULT_FX_STATE } from './effects/types';
+import { EffectPanel } from './components/EffectPanel';
+import { padIdToDisplayString } from './utils/padId';
 import { clearAll } from './utils/sampleStore';
 import './App.css';
 
@@ -35,7 +39,19 @@ export default function App() {
   const { audioContext, initAudioContext, contextState, isInitialized: audioInit, resumeContext } = useAudioContext();
   const online = useOnlineStatus();
   const persist = usePersistentStorage();
-  const { trigger, loopTrim, stopAll } = useAudioEngine(initAudioContext);
+  // Master FX bus: declared early so useAudioEngine can route through it.
+  // `bpm` is owned here too (was lower in file) because the delay effect
+  // needs to tempo-sync to it.
+  const [bpm, setBpm] = usePersistedState('bpm', 90);
+  const [fx, setFx] = usePersistedState('fx', DEFAULT_FX_STATE);
+  const [fxBypass, setFxBypass] = useState(false);
+  const { getMasterInput } = useEffects({
+    initAudioContext,
+    fx,
+    bpm,
+    bypass: fxBypass,
+  });
+  const { trigger, loopTrim, stopAll } = useAudioEngine(initAudioContext, getMasterInput);
   const {
     samples,
     restoreState,
@@ -48,7 +64,6 @@ export default function App() {
   } = usePersistedSamples(initAudioContext);
   const storageInfo = useStorageQuota();
   const [selectedPadId, setSelectedPadId] = useState(null);
-  const [bpm, setBpm] = usePersistedState('bpm', 90);
   const [patterns, setPatterns] = usePersistedState('patterns', {});
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -227,8 +242,11 @@ export default function App() {
   const selectedPattern = selectedPadId ? patterns[selectedPadId] : null;
   const loadedCount = Object.values(samples).filter((s) => !!s && !!s.buffer).length;
 
+  // Wrap in a flex column so SampleDisplay (waveform) and Mixer (pad info)
+  // get clean vertical separation. Without the gap they used to abut each
+  // other inside the BottomSheet body, making the boundary visually unclear.
   const samplePanel = (
-    <>
+    <div className="sample-panel-stack">
       <SampleDisplay
         sample={selectedSample}
         chopBoundaries={chopBoundaries}
@@ -256,7 +274,7 @@ export default function App() {
         onAutoChop={runAutoChop}
         chopMessage={chopMessage}
       />
-    </>
+    </div>
   );
 
   return (
@@ -314,6 +332,15 @@ export default function App() {
             )}
           </div>
 
+          <section className="workspace-fx">
+            <EffectPanel
+              fx={fx}
+              onFxChange={setFx}
+              bypass={fxBypass}
+              onBypassChange={setFxBypass}
+            />
+          </section>
+
           <section className="workspace-bottom">
             <Sequencer
               pattern={selectedPattern}
@@ -331,7 +358,7 @@ export default function App() {
         <BottomSheet
           open={sampleSheetOpen && !!selectedSample?.buffer}
           onClose={() => setSampleSheetOpen(false)}
-          title={selectedSample ? `SAMPLE · PAD ${selectedPadId}` : 'SAMPLE'}
+          title={selectedSample && selectedPadId ? `SAMPLE · PAD ${padIdToDisplayString(selectedPadId)}` : 'SAMPLE'}
         >
           {samplePanel}
         </BottomSheet>

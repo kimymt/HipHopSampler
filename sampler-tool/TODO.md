@@ -1,6 +1,6 @@
 # TODO
 
-`/qa` で見つかった deferred 課題と、Phase 4 後に積んだ Phase 2 候補のうち本セッションでは見送ったもの。
+`/qa` で見つかった deferred 課題、ロードマップから派生した次の検討事項。
 
 ---
 
@@ -20,6 +20,8 @@
 
 **推奨:** B を試す → ダメなら C で軽量な自前アナリティクスへ。
 
+> 注: PR #12 で CSP ヘッダに CF Insights を allow 済。SRI 問題自体は CF 側の挙動次第。
+
 ---
 
 ### sw.js が `Cache-Control: max-age=120` で配信される (Low)
@@ -38,12 +40,89 @@
 
 ---
 
-## 🟢 P2 — 機能追加 (ROADMAP からのコピー)
+## 🎛 エフェクト機能 — Phase 2 / 3 設計判断 TODO
+
+Phase 1 (ネイティブ Web Audio で 5-6 エフェクト) は別 PR で着手。以下は AI エフェクト導入時の判断材料。
+
+> **重要な制約**: 若年層のモバイル利用比率が高いため、**デスクトップ限定の体験は避ける**。iOS Safari / Android Chrome で動くことが前提。
+
+---
+
+### Phase 2: クラウド LLM Function Calling — モデル選定
+
+ユーザーが「もっとローファイに」「水中っぽく」「テープサチュレーション」のように自然言語で指示 → LLM が Web Audio パラメータを JSON で返す → 既存 Phase 1 エフェクトに当てはめる。
+
+#### 候補モデルの比較軸 (調査必要)
+
+| 項目 | Claude (Anthropic) | GPT (OpenAI) | Gemini (Google) |
+|---|---|---|---|
+| Tool Use / Function Calling 品質 | ? | ? | ? |
+| 入力トークン単価 (1Mトークン) | ? | ? | ? |
+| 出力トークン単価 | ? | ? | ? |
+| レイテンシ p50 (簡単な JSON 生成) | ? | ? | ? |
+| 月間無料枠 / 新規アカウント特典 | ? | ? | ? |
+| ブラウザ CORS から直接呼べるか | ? | ? | ? |
+
+#### 主要な検討事項
+- **どのプランで運用するか** — 個人開発の趣味プロダクトなので、ユーザー数 100-1000 人/月想定でコストが現実的か
+- **API key 露出リスク** — ブラウザから直接呼ぶと API key がクライアント露出。Cloudflare Workers (Pages Functions) で proxy する方式か、ユーザーに自分の API key を入れてもらう方式か
+- **オフライン時のフォールバック** — PWA でオフライン使用中はこの機能は無効になる旨の UX
+- **レイテンシ目標** — 「もっとローファイに」入力 → 音が変わるまで 1.5秒以内が体感的限界。pre-streaming や思考フェーズの可視化が必要か
+
+#### 推奨スパイク
+1. 各モデルで「水中っぽくして」を JSON Schema で投げる→ 同じ Web Audio パラメータが返るか比較
+2. CF Pages Functions に proxy エンドポイント実装、API key 隠蔽
+3. レイテンシ計測を実機で
+
+---
+
+### Phase 3: オンデバイス AI エフェクト — モバイル対応版の調査
+
+> **新しい調査対象**: [Stability AI × Arm: Stable Audio Open Small enabling on-device audio control](https://stability.ai/news-updates/stability-ai-and-arm-release-stable-audio-open-small-enabling-real-world-deployment-for-on-device-audio-control)
+
+#### 注目ポイント
+- **497M パラメータ + Int8 量子化** — モバイル端末向けに軽量化
+- **Arm KleidiAI 最適化** で Snapdragon / iOS A シリーズの CPU で動作可能を主張
+- 12秒オーディオ生成が **モバイル ~7秒** (Arm 公称ベンチ)
+- Hugging Face オープンウェイト
+
+#### ブラウザ実装の現実性 (要追加調査)
+- **ONNX Runtime Web + WebAssembly + WebGPU/WebNN で iOS Safari 上で動くか**
+  - iOS Safari の WebGPU は 2025 後半に limited support。2026 後半~2027 で本格化予想
+  - WebNN は iOS Safari 未対応 (2026/5 時点)
+  - WASM SIMD のみだと推論が現実的速度で動くか不明
+- **モデル DL サイズ** — 数百 MB の初回 DL、PWA cache strategy をどう設計するか
+- **代替**: ネイティブ iOS / Android アプリ化を再検討する分岐点になる可能性
+- **競合フレームワーク**: TensorFlow Lite Web、Transformers.js (Hugging Face)、MediaPipe で audio 処理可能か
+
+#### 仮説的ユースケース
+- 「AI Reimagine」ボタンで pad を選び 1 タップ → モデルがプロンプト内蔵で再解釈 (例: "lo-fi hip hop, vinyl crackle, warm")
+- 7秒待ち時間中に進行表示 + 既存サンプルでのプレビュー継続
+- 結果を新しいサンプルとして次の空 pad に savepush
+
+#### 推奨スパイク
+1. Stable Audio Open Small を Hugging Face から DL → ONNX export → ONNX Runtime Web でデスクトップ Chrome 動作テスト
+2. iOS Safari + Android Chrome で同じ ONNX が動くか実機検証
+3. 動かない場合は Transformers.js / MediaPipe / TensorFlow Lite Web を順次評価
+4. **どれも実用域に達しない場合**: Phase 2 (クラウド LLM) を当面の差別化機能とし、Phase 3 は WebGPU 安定化 (2026 後半~2027) まで延期
+
+---
+
+### 不採用 (理由付き)
+
+- **Apple Intelligence Foundation Model 直接呼出** — 2026/5 時点で audio modality 非対応 + Swift 専用で PWA から呼べない。クラウド LLM Function Calling が同等体験を全プラットフォームで提供できるため、Apple 縛りに乗る理由がない
+- **デスクトップ限定の Stable Audio Open Small** — 若年層モバイル利用比率を考えると体験が限定される。モバイルでも動くまで延期
+
+---
+
+## 🟢 P2 — 機能追加 (ROADMAP)
 
 優先順位順:
 
-- [ ] **マイク録音** (getUserMedia でサンプル直接録音) — ペルソナ的に最も "音楽的" な拡張
-- [ ] **エフェクト** (リバーブ、ディレイ、ローパスフィルタ) — Web Audio Effects、シンプル
+- [x] ~~**マイク録音**~~ (PR #9 で完了)
+- [ ] **エフェクト** (Phase 1: Reverb / Delay / Filter / Saturation / Lo-fi など Web Audio ネイティブ) — 着手中
+- [ ] **エフェクト** (Phase 2: LLM Function Calling, 上記 TODO 参照)
+- [ ] **エフェクト** (Phase 3: オンデバイス生成 AI, 上記 TODO 参照)
 - [ ] **複数バンク** (A/B/C/D で 64 パッド)
 - [ ] **WAV エクスポート** (OfflineAudioContext)
 - [ ] **MIDI 入力対応** (Web MIDI API)
@@ -51,14 +130,16 @@
 
 ---
 
-## 🔧 技術的負債 (ROADMAP からのコピー)
+## 🔧 技術的負債 (ROADMAP)
 
-- [ ] **オーディオレイテンシー測定** — 100ms以内の検証 (実機 + Audio Worklet 計測)
-- [ ] **TypeScript 完全移行** — `.jsx` → `.tsx` 化 + 型付け
-- [ ] **ユニットテスト** — Vitest で hooks (useSequencer, useAudioEngine) と utils (onsetDetect) を保護
-- [ ] **App.jsx の責務分離** — 230行に肥大化。`useChopGroups`, `useAutoChop` フックに切り出し
-- [ ] **Tour spotlight モバイル時挙動** — 実機で確認
-- [ ] **App.jsx の `selectedSample` 参照順序** — `handleAutoChop` 内で `selectedSample` を使うが、宣言は後 (closure で動くが TypeScript 化時に `no-use-before-define` で問題)
+- [x] ~~**オーディオレイテンシー測定**~~ (PR #19 で完了 — Settings に LatencyBadge)
+- [x] ~~**TypeScript 完全移行**~~ (PR #18 で完了 — 21 files、57→0 type errors)
+- [x] ~~**ユニットテスト**~~ (PR #17 で完了 — Vitest + 51 tests)
+- [x] ~~**App.jsx の責務分離**~~ (PR #13 で完了 — useAutoChop / useChopGroups 抽出)
+- [x] ~~**App.jsx の `selectedSample` 参照順序**~~ (PR #13 で完了)
+- [x] ~~**Tour spotlight モバイル時挙動**~~ (PR #12 で完了 — auto-rotate + 明度向上)
+
+技術的負債タスクはすべて解消済 (2026-05-05)。
 
 ---
 
@@ -75,4 +156,4 @@
 
 ---
 
-最終更新: 2026-05-04 / Cloudflare Pages 初回デプロイ後 / sampler.mymt.casa 稼働中
+最終更新: 2026-05-05 / 技術的負債 4 PR 全完了、リポ整理完了 / エフェクト Phase 1 着手

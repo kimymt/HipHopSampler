@@ -35,6 +35,31 @@
   width: 100%;
 }
 
+/* Sample panel: waveform display + mixer stacked with breathing room.
+   Used inside both the desktop workspace-right and the mobile BottomSheet. */
+.sample-panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 767px) {
+  .sample-panel-stack {
+    gap: 12px;
+  }
+}
+
+.workspace-fx {
+  width: 100%;
+  margin-top: 8px;
+}
+
+@media (max-width: 767px) {
+  .workspace-fx {
+    margin-top: 4px;
+  }
+}
+
 .section-label {
   font-family: var(--mono);
   font-size: 10px;

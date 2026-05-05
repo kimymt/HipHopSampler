@@ -1,4 +1,5 @@
 import React from 'react';
+import { padIdToDisplayString } from '../utils/padId';
 import './Mixer.css';
 
 export const Mixer = ({ sample, padId, onVolumeChange, onPanChange, onRemove, onAutoChop, chopMessage }) => {
@@ -14,7 +15,7 @@ export const Mixer = ({ sample, padId, onVolumeChange, onPanChange, onRemove, on
     );
   }
 
-  const padNumber = padId ? parseInt(padId.split('-')[0]) * 4 + parseInt(padId.split('-')[1]) + 1 : 0;
+  const padDisplay = padId ? padIdToDisplayString(padId) : '00';
   const inChopGroup = !!sample.chopGroup;
 
   return (
@@ -22,7 +23,7 @@ export const Mixer = ({ sample, padId, onVolumeChange, onPanChange, onRemove, on
       <div className="mixer-header">
         <div className="mixer-title">
           <span className="mixer-label">SAMPLE</span>
-          <span className="mixer-padnum">PAD {padNumber.toString().padStart(2, '0')}</span>
+          <span className="mixer-padnum">PAD {padDisplay}</span>
           {inChopGroup && <span className="mixer-chop-tag">CHOP {(sample.chopIndex ?? 0) + 1}</span>}
         </div>
         <button className="mixer-remove" onClick={onRemove} title="Remove sample">×</button>
