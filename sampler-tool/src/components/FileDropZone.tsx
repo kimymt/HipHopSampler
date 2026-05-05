@@ -17,7 +17,7 @@ export const FileDropZone = ({ onFileDrop, children }) => {
     e.preventDefault();
     setIsDragOver(false);
 
-    const files = Array.from(e.dataTransfer.files);
+    const files: File[] = Array.from(e.dataTransfer.files);
     const audioFiles = files.filter((file) =>
       /\.(wav|mp3|ogg|m4a)$/i.test(file.name)
     );

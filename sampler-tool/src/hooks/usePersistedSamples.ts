@@ -9,10 +9,10 @@ import {
   removePad,
   generateSourceId,
   requestPersistentStorage,
-  estimateQuota,
 } from '../utils/sampleStore';
+import type { Sample, SampleMap, PadMetadata, RestoreState } from '../types';
 
-const padMetadata = (s) => ({
+const padMetadata = (s: Sample): Omit<PadMetadata, 'padId'> => ({
   sourceId: s.sourceId,
   name: s.name,
   startTime: s.startTime ?? 0,
@@ -22,11 +22,11 @@ const padMetadata = (s) => ({
   loopEnd: s.loopEnd ?? s.buffer?.duration ?? 0,
   volume: s.volume ?? 1,
   pan: s.pan ?? 0,
-  chopGroup: s.chopGroup ?? null,
-  chopIndex: s.chopIndex ?? null,
+  chopGroup: s.chopGroup ?? undefined,
+  chopIndex: s.chopIndex ?? undefined,
 });
 
-const defaultSample = (buffer, name, sourceId) => ({
+const defaultSample = (buffer: AudioBuffer, name: string, sourceId: string): Sample => ({
   buffer,
   name,
   sourceId,
@@ -39,6 +39,8 @@ const defaultSample = (buffer, name, sourceId) => ({
   pan: 0,
 });
 
+type InitAudioContext = (() => AudioContext | null) | undefined;
+
 /**
  * Persistence-aware sample state.
  *
@@ -49,11 +51,11 @@ const defaultSample = (buffer, name, sourceId) => ({
  *  3. setSample / updateMany → mirror to IDB
  *  4. removeSample → delete pad + GC orphan audio
  */
-export const usePersistedSamples = (initAudioContext) => {
-  const [samples, setSamples] = useState({});
-  const [loading, setLoading] = useState({});
-  const [restoreState, setRestoreState] = useState({
-    status: 'idle', // 'idle' | 'restoring' | 'ready' | 'error'
+export const usePersistedSamples = (initAudioContext: InitAudioContext) => {
+  const [samples, setSamples] = useState<SampleMap>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [restoreState, setRestoreState] = useState<RestoreState>({
+    status: 'idle',
     progress: 0,
     total: 0,
     error: null,
@@ -67,7 +69,7 @@ export const usePersistedSamples = (initAudioContext) => {
 
     (async () => {
       try {
-        const padEntries = await loadAllPads();
+        const padEntries = (await loadAllPads()) as PadMetadata[];
         if (!padEntries.length) {
           setRestoreState({ status: 'ready', progress: 0, total: 0, error: null });
           return;
@@ -84,11 +86,11 @@ export const usePersistedSamples = (initAudioContext) => {
         }
 
         // Group pads by sourceId so we decode each unique buffer once.
-        const sourceToPads = new Map();
+        const sourceToPads = new Map<string, PadMetadata[]>();
         padEntries.forEach((p) => {
           if (!p.sourceId) return;
           if (!sourceToPads.has(p.sourceId)) sourceToPads.set(p.sourceId, []);
-          sourceToPads.get(p.sourceId).push(p);
+          sourceToPads.get(p.sourceId)!.push(p);
         });
 
         let done = 0;
@@ -99,7 +101,7 @@ export const usePersistedSamples = (initAudioContext) => {
 
         // Decode all unique sources in parallel
         const sourceEntries = await Promise.all(
-          Array.from(sourceToPads.keys()).map(async (sourceId) => {
+          Array.from(sourceToPads.keys()).map(async (sourceId): Promise<[string, AudioBuffer | null]> => {
             const audio = await loadAudio(sourceId);
             if (!audio?.arrayBuffer) return [sourceId, null];
             try {
@@ -109,11 +111,11 @@ export const usePersistedSamples = (initAudioContext) => {
             } catch {
               return [sourceId, null];
             }
-          })
+          }),
         );
 
-        const sourceIdToBuffer = new Map(sourceEntries);
-        const next = {};
+        const sourceIdToBuffer = new Map<string, AudioBuffer | null>(sourceEntries);
+        const next: SampleMap = {};
         padEntries.forEach((p) => {
           const buffer = sourceIdToBuffer.get(p.sourceId);
           if (!buffer) {
@@ -141,75 +143,85 @@ export const usePersistedSamples = (initAudioContext) => {
         setRestoreState({ status: 'ready', progress: padEntries.length, total: padEntries.length, error: null });
       } catch (err) {
         console.error('[persisted-samples] restore failed:', err);
-        setRestoreState({ status: 'error', progress: 0, total: 0, error: err?.message || 'restore failed' });
+        const message = err instanceof Error ? err.message : 'restore failed';
+        setRestoreState({ status: 'error', progress: 0, total: 0, error: message });
       }
     })();
   }, [initAudioContext]);
 
-  const loadSample = useCallback((padId, file) => {
-    const ctx = initAudioContext?.();
-    if (!ctx) return;
-    setLoading((prev) => ({ ...prev, [padId]: true }));
+  const loadSample = useCallback(
+    (padId: string, file: File | Blob & { name?: string; type?: string }) => {
+      const ctx = initAudioContext?.();
+      if (!ctx) return;
+      setLoading((prev) => ({ ...prev, [padId]: true }));
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const arrayBuffer = e.target.result;
-      const sourceId = generateSourceId();
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const sourceId = generateSourceId();
+        const fileName = (file as File).name ?? 'recording.webm';
+        const fileType = file.type || 'audio/wav';
 
-      try {
-        // 1. Persist BEFORE decode so we don't depend on the (possibly-transferred) buffer
-        await saveAudio(sourceId, arrayBuffer.slice(0), file.type || 'audio/wav');
-      } catch (err) {
-        console.error('[persisted-samples] saveAudio failed:', err);
-        setLoading((prev) => ({ ...prev, [padId]: false }));
-        return;
-      }
-
-      // 2. Decode
-      ctx.decodeAudioData(
-        arrayBuffer,
-        async (audioBuffer) => {
-          const sample = defaultSample(audioBuffer, file.name, sourceId);
-          setSamples((prev) => ({ ...prev, [padId]: sample }));
+        try {
+          // 1. Persist BEFORE decode so we don't depend on the (possibly-transferred) buffer
+          await saveAudio(sourceId, arrayBuffer.slice(0), fileType);
+        } catch (err) {
+          console.error('[persisted-samples] saveAudio failed:', err);
           setLoading((prev) => ({ ...prev, [padId]: false }));
-          // 3. Persist pad metadata
-          try {
-            await savePad(padId, padMetadata(sample));
-          } catch (err) {
-            console.error('[persisted-samples] savePad failed:', err);
-          }
-        },
-        (err) => {
-          console.error('[persisted-samples] decode failed:', err);
-          setLoading((prev) => ({ ...prev, [padId]: false }));
+          return;
         }
-      );
-    };
-    reader.readAsArrayBuffer(file);
-  }, [initAudioContext]);
 
-  const getSample = useCallback((padId) => samples[padId] || null, [samples]);
+        // 2. Decode
+        ctx.decodeAudioData(
+          arrayBuffer,
+          async (audioBuffer) => {
+            const sample = defaultSample(audioBuffer, fileName, sourceId);
+            setSamples((prev) => ({ ...prev, [padId]: sample }));
+            setLoading((prev) => ({ ...prev, [padId]: false }));
+            // 3. Persist pad metadata
+            try {
+              await savePad(padId, padMetadata(sample));
+            } catch (err) {
+              console.error('[persisted-samples] savePad failed:', err);
+            }
+          },
+          (err) => {
+            console.error('[persisted-samples] decode failed:', err);
+            setLoading((prev) => ({ ...prev, [padId]: false }));
+          },
+        );
+      };
+      reader.readAsArrayBuffer(file);
+    },
+    [initAudioContext],
+  );
 
-  const updateSampleProperty = useCallback((padId, property, value) => {
+  const getSample = useCallback((padId: string): Sample | null => samples[padId] || null, [samples]);
+
+  const updateSampleProperty = useCallback(
+    <K extends keyof Sample>(padId: string, property: K, value: Sample[K]) => {
+      setSamples((prev) => {
+        if (!prev[padId]) return prev;
+        const next = { ...prev[padId], [property]: value };
+        updatePad(padId, { [property]: value }).catch(() => {});
+        return { ...prev, [padId]: next };
+      });
+    },
+    [],
+  );
+
+  const updateMany = useCallback((updates: Record<string, Partial<Sample>>) => {
     setSamples((prev) => {
-      if (!prev[padId]) return prev;
-      const next = { ...prev[padId], [property]: value };
-      updatePad(padId, { [property]: value }).catch(() => {});
-      return { ...prev, [padId]: next };
-    });
-  }, []);
-
-  const updateMany = useCallback((updates) => {
-    setSamples((prev) => {
-      const next = { ...prev };
-      const idbWrites = [];
+      const next: SampleMap = { ...prev };
+      const idbWrites: { padId: string; data: Omit<PadMetadata, 'padId'> }[] = [];
       Object.entries(updates).forEach(([padId, partial]) => {
         if (next[padId]) {
-          next[padId] = { ...next[padId], ...partial };
-          idbWrites.push({ padId, data: padMetadata(next[padId]) });
-        } else {
-          next[padId] = partial;
-          idbWrites.push({ padId, data: padMetadata(partial) });
+          next[padId] = { ...next[padId], ...partial } as Sample;
+          idbWrites.push({ padId, data: padMetadata(next[padId] as Sample) });
+        } else if ((partial as Sample).buffer) {
+          // First-time write (auto chop assigns to a previously-empty pad).
+          next[padId] = partial as Sample;
+          idbWrites.push({ padId, data: padMetadata(partial as Sample) });
         }
       });
       if (idbWrites.length) {
@@ -219,14 +231,14 @@ export const usePersistedSamples = (initAudioContext) => {
     });
   }, []);
 
-  const setSample = useCallback((padId, sampleData) => {
+  const setSample = useCallback((padId: string, sampleData: Sample) => {
     setSamples((prev) => ({ ...prev, [padId]: sampleData }));
     savePad(padId, padMetadata(sampleData)).catch((err) =>
-      console.error('[persisted-samples] savePad failed:', err)
+      console.error('[persisted-samples] savePad failed:', err),
     );
   }, []);
 
-  const removeSample = useCallback((padId) => {
+  const removeSample = useCallback((padId: string) => {
     setSamples((prev) => {
       const next = { ...prev };
       delete next[padId];

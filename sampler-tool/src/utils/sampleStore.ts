@@ -9,15 +9,16 @@
  * Why split: a 5-min loop chopped into 16 slices stays one ArrayBuffer on disk
  * instead of 16 copies. Pad metadata (volume / trim) updates are cheap.
  */
+import type { AudioStoreEntry, PadMetadata } from '../types';
 
 const DB_NAME = 'hip-hop-sampler';
 const DB_VERSION = 1;
 const AUDIO_STORE = 'audio';
 const PADS_STORE = 'pads';
 
-let dbPromise = null;
+let dbPromise: Promise<IDBDatabase> | null = null;
 
-const openDB = () => {
+const openDB = (): Promise<IDBDatabase> => {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') {
@@ -40,37 +41,39 @@ const openDB = () => {
   return dbPromise;
 };
 
-const promisifyTx = (tx) => new Promise((resolve, reject) => {
-  tx.oncomplete = () => resolve();
-  tx.onerror = () => reject(tx.error || new Error('IDB transaction failed'));
-  tx.onabort = () => reject(tx.error || new Error('IDB transaction aborted'));
-});
+const promisifyTx = (tx: IDBTransaction): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('IDB transaction failed'));
+    tx.onabort = () => reject(tx.error || new Error('IDB transaction aborted'));
+  });
 
-const promisifyReq = (req) => new Promise((resolve, reject) => {
-  req.onsuccess = () => resolve(req.result);
-  req.onerror = () => reject(req.error);
-});
+const promisifyReq = <T>(req: IDBRequest<T>): Promise<T> =>
+  new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 
-export const generateSourceId = () =>
+export const generateSourceId = (): string =>
   `src-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 /** Write the raw ArrayBuffer for a source. Idempotent on sourceId. */
-export const saveAudio = async (sourceId, arrayBuffer, mimeType) => {
+export const saveAudio = async (sourceId: string, arrayBuffer: ArrayBuffer, mimeType: string): Promise<void> => {
   const db = await openDB();
   const tx = db.transaction(AUDIO_STORE, 'readwrite');
   tx.objectStore(AUDIO_STORE).put({ sourceId, arrayBuffer, mimeType, savedAt: Date.now() });
   return promisifyTx(tx);
 };
 
-/** Read raw ArrayBuffer + mime by sourceId. Returns null if not found. */
-export const loadAudio = async (sourceId) => {
+/** Read raw ArrayBuffer + mime by sourceId. Returns undefined if not found. */
+export const loadAudio = async (sourceId: string): Promise<AudioStoreEntry | undefined> => {
   const db = await openDB();
   const tx = db.transaction(AUDIO_STORE, 'readonly');
-  return promisifyReq(tx.objectStore(AUDIO_STORE).get(sourceId));
+  return promisifyReq<AudioStoreEntry | undefined>(tx.objectStore(AUDIO_STORE).get(sourceId));
 };
 
 /** Save pad metadata. Caller decides what to store. */
-export const savePad = async (padId, data) => {
+export const savePad = async (padId: string, data: Omit<PadMetadata, 'padId'>): Promise<void> => {
   const db = await openDB();
   const tx = db.transaction(PADS_STORE, 'readwrite');
   tx.objectStore(PADS_STORE).put({ padId, ...data, savedAt: Date.now() });
@@ -78,11 +81,11 @@ export const savePad = async (padId, data) => {
 };
 
 /** Patch pad metadata. No-op if pad doesn't exist. */
-export const updatePad = async (padId, partial) => {
+export const updatePad = async (padId: string, partial: Partial<PadMetadata>): Promise<void> => {
   const db = await openDB();
   const tx = db.transaction(PADS_STORE, 'readwrite');
   const store = tx.objectStore(PADS_STORE);
-  const existing = await promisifyReq(store.get(padId));
+  const existing = await promisifyReq<PadMetadata | undefined>(store.get(padId));
   if (existing) {
     store.put({ ...existing, ...partial, savedAt: Date.now() });
   }
@@ -90,7 +93,9 @@ export const updatePad = async (padId, partial) => {
 };
 
 /** Atomic multi-pad write. */
-export const savePads = async (entries) => {
+export const savePads = async (
+  entries: { padId: string; data: Omit<PadMetadata, 'padId'> }[],
+): Promise<void> => {
   const db = await openDB();
   const tx = db.transaction(PADS_STORE, 'readwrite');
   const store = tx.objectStore(PADS_STORE);
@@ -101,18 +106,18 @@ export const savePads = async (entries) => {
 };
 
 /** Read all pad metadata. */
-export const loadAllPads = async () => {
+export const loadAllPads = async (): Promise<PadMetadata[]> => {
   const db = await openDB();
   const tx = db.transaction(PADS_STORE, 'readonly');
-  return promisifyReq(tx.objectStore(PADS_STORE).getAll());
+  return promisifyReq<PadMetadata[]>(tx.objectStore(PADS_STORE).getAll());
 };
 
 /** Remove a pad and (if no other pad uses its source) garbage-collect the audio. */
-export const removePad = async (padId) => {
+export const removePad = async (padId: string): Promise<void> => {
   const db = await openDB();
   // Read pad first to know the sourceId
   const readTx = db.transaction(PADS_STORE, 'readonly');
-  const pad = await promisifyReq(readTx.objectStore(PADS_STORE).get(padId));
+  const pad = await promisifyReq<PadMetadata | undefined>(readTx.objectStore(PADS_STORE).get(padId));
   await promisifyTx(readTx);
   if (!pad) return;
 
@@ -126,7 +131,7 @@ export const removePad = async (padId) => {
   // Check if any other pad still references this sourceId
   if (!sourceId) return;
   const checkTx = db.transaction(PADS_STORE, 'readonly');
-  const remaining = await promisifyReq(checkTx.objectStore(PADS_STORE).getAll());
+  const remaining = await promisifyReq<PadMetadata[]>(checkTx.objectStore(PADS_STORE).getAll());
   await promisifyTx(checkTx);
   const stillReferenced = remaining.some((p) => p.sourceId === sourceId);
   if (!stillReferenced) {
@@ -137,7 +142,7 @@ export const removePad = async (padId) => {
 };
 
 /** Wipe everything. */
-export const clearAll = async () => {
+export const clearAll = async (): Promise<void> => {
   const db = await openDB();
   const tx = db.transaction([AUDIO_STORE, PADS_STORE], 'readwrite');
   tx.objectStore(AUDIO_STORE).clear();
@@ -146,7 +151,7 @@ export const clearAll = async () => {
 };
 
 /** Ask the browser to keep our storage even under pressure. */
-export const requestPersistentStorage = async () => {
+export const requestPersistentStorage = async (): Promise<boolean> => {
   if (!navigator.storage?.persist) return false;
   try {
     return await navigator.storage.persist();
@@ -156,7 +161,7 @@ export const requestPersistentStorage = async () => {
 };
 
 /** Returns null if the API is unavailable. */
-export const estimateQuota = async () => {
+export const estimateQuota = async (): Promise<{ usage: number; quota: number; percent: number } | null> => {
   if (!navigator.storage?.estimate) return null;
   try {
     const { usage = 0, quota = 0 } = await navigator.storage.estimate();
@@ -167,7 +172,7 @@ export const estimateQuota = async () => {
   }
 };
 
-export const isPersisted = async () => {
+export const isPersisted = async (): Promise<boolean> => {
   if (!navigator.storage?.persisted) return false;
   try {
     return await navigator.storage.persisted();

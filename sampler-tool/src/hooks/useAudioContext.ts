@@ -7,7 +7,9 @@ export const useAudioContext = () => {
 
   const initAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const Ctor: typeof AudioContext =
+        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new Ctor();
       audioContextRef.current = ctx;
       setIsInitialized(true);
       setContextState(ctx.state);

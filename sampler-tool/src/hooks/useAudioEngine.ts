@@ -9,7 +9,7 @@ import { useCallback, useRef } from 'react';
  * sequencer scheduler is torn down.
  */
 export const useAudioEngine = (initAudioContext) => {
-  const activeRef = useRef(new Set());
+  const activeRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
   const trigger = useCallback((sample, when = 0) => {
     const ctx = initAudioContext();

@@ -7,7 +7,25 @@
  * Tuned for Hip Hop drum loops & vocal phrases. Not meant to be perfect —
  * the user can drag boundaries to fix anything we miss.
  */
-export const detectOnsets = (audioBuffer, options = {}) => {
+interface OnsetOptions {
+  windowSize?: number;       // analysis window in seconds
+  hopSize?: number;          // hop in seconds (50% overlap default)
+  minSpacing?: number;       // minimum seconds between detected hits
+  relativeThreshold?: number; // 0..1 — peaks above this fraction of max flux
+  maxOnsets?: number;        // hard cap on count
+}
+
+// Minimal subset of the AudioBuffer interface that the detector needs.
+// Lets tests pass plain objects instead of constructing real buffers.
+interface AudioBufferLike {
+  getChannelData(ch: number): Float32Array;
+  sampleRate: number;
+  duration: number;
+  length: number;
+  numberOfChannels: number;
+}
+
+export const detectOnsets = (audioBuffer: AudioBufferLike, options: OnsetOptions = {}): number[] => {
   const {
     windowSize = 0.023,       // ~23ms window
     hopSize = 0.011,          // ~11ms hop (50% overlap)
@@ -71,7 +89,7 @@ export const detectOnsets = (audioBuffer, options = {}) => {
  *
  * Returns an array of N+1 boundaries that define N slices.
  */
-export const buildSlicePoints = (onsets, totalDuration) => {
+export const buildSlicePoints = (onsets: number[], totalDuration: number): number[] => {
   const points = [...onsets];
   // If the first onset is way past the start, prepend 0 so we keep the head
   if (points.length === 0 || points[0] > 0.04) {

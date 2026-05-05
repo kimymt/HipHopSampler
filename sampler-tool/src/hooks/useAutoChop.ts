@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { detectOnsets, buildSlicePoints } from '../utils/onsetDetect';
+import type { Sample } from '../types';
 
-const ALL_PAD_IDS = (() => {
-  const out = [];
+const ALL_PAD_IDS: string[] = (() => {
+  const out: string[] = [];
   for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) out.push(`${r}-${c}`);
   return out;
 })();
+
+interface UseAutoChopArgs {
+  selectedSample: Sample | null;
+  selectedPadId: string | null;
+  stopAll: () => void;
+  updateMany: (updates: Record<string, Sample>) => void;
+}
 
 /**
  * Auto-chop hook.
@@ -14,22 +22,12 @@ const ALL_PAD_IDS = (() => {
  * boundaries, and assigns one slice per pad starting from the selected pad
  * (wrapping back to the front when we run out). Siblings share the source
  * AudioBuffer + sourceId so IndexedDB persistence stays deduplicated.
- *
- * Inputs:
- * - selectedSample: the sample we're chopping (or null)
- * - selectedPadId: the pad id that holds it (or null)
- * - stopAll: audio engine stopAll() — call before touching pads in flight
- * - updateMany: persisted-samples updateMany setter
- *
- * Outputs:
- * - chopMessage: string | null — short status banner (auto-clears in ~3-4s)
- * - runAutoChop: () => void — kick off the chop
  */
-export function useAutoChop({ selectedSample, selectedPadId, stopAll, updateMany }) {
-  const [chopMessage, setChopMessage] = useState(null);
-  const messageTimerRef = useRef(null);
+export function useAutoChop({ selectedSample, selectedPadId, stopAll, updateMany }: UseAutoChopArgs) {
+  const [chopMessage, setChopMessage] = useState<string | null>(null);
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const setMessage = useCallback((msg, ms) => {
+  const setMessage = useCallback((msg: string, ms: number) => {
     if (messageTimerRef.current) {
       clearTimeout(messageTimerRef.current);
     }
@@ -74,7 +72,7 @@ export function useAutoChop({ selectedSample, selectedPadId, stopAll, updateMany
     const baseName = selectedSample.name;
     // Siblings share the source bytes — propagate sourceId so restore works.
     const sourceId = selectedSample.sourceId;
-    const updates = {};
+    const updates: Record<string, Sample> = {};
     targets.forEach((padId, idx) => {
       updates[padId] = {
         buffer,
