@@ -390,11 +390,8 @@ export default function App() {
       />
       <IosInstallGuide open={pwa.showIosGuide} onClose={pwa.dismissIosGuide} />
       <UpdateToast
-        needRefresh={pwa.needRefresh}
         offlineReady={pwa.offlineReady}
         persistResult={persist.recentlyResolved ? persist.lastResult : null}
-        onApply={pwa.applyUpdate}
-        onDismissUpdate={pwa.dismissUpdate}
         onDismissOffline={pwa.dismissOfflineReady}
         onDismissPersist={persist.dismiss}
       />

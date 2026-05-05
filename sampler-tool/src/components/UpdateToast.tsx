@@ -3,31 +3,19 @@ import './UpdateToast.css';
 
 /**
  * Bottom-right ephemeral toast.
- * Priority order: needRefresh > persistResult > offlineReady. Only one shown at a time.
+ *
+ * SW updates auto-apply silently (vite.config.js: registerType 'autoUpdate' +
+ * clientsClaim + skipWaiting), so there is no "新バージョン更新" prompt — users
+ * get the new bundle on the next page load without having to tap a button.
+ *
+ * Priority: persistResult > offlineReady. Only one shown at a time.
  */
 export const UpdateToast = ({
-  needRefresh,
   offlineReady,
   persistResult,
-  onApply,
-  onDismissUpdate,
   onDismissOffline,
   onDismissPersist,
 }) => {
-  if (needRefresh) {
-    return (
-      <div className="pwa-toast pwa-toast-update" role="status">
-        <div className="pwa-toast-body">
-          <strong>新バージョンあります</strong>
-          <span>更新を適用しますか？</span>
-        </div>
-        <div className="pwa-toast-actions">
-          <button className="pwa-toast-btn primary" onClick={onApply}>更新</button>
-          <button className="pwa-toast-btn" onClick={onDismissUpdate}>あとで</button>
-        </div>
-      </div>
-    );
-  }
   if (persistResult === 'granted') {
     return (
       <div className="pwa-toast pwa-toast-persist" role="status">

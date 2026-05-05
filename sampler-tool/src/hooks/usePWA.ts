@@ -23,18 +23,22 @@ export const usePWA = () => {
     /iPad|iPhone|iPod/.test(window.navigator.userAgent) &&
     !(window.navigator as Navigator & { standalone?: boolean }).standalone;
 
-  // SW registration + update flow
+  // SW registration + offline-ready flow.
+  // With registerType: 'autoUpdate' (vite.config.js), new SW versions skipWaiting
+  // and clientsClaim automatically. We don't expose a needRefresh prompt to the
+  // user — updates apply silently and the new bundle appears on the next page
+  // load. This avoids the "ignored toast → stuck on old version" failure mode.
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
-    updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
-      // Re-check for updates every hour while the tab is open.
+      // Re-check for updates every 30 minutes while the tab is open. Shorter
+      // than the previous 1h so deploys propagate to long-lived sessions
+      // (e.g. an iPad PWA left open) within half an hour.
       if (registration) {
         setInterval(() => {
           registration.update().catch(() => {});
-        }, 60 * 60 * 1000);
+        }, 30 * 60 * 1000);
       }
     },
     onRegisterError(err) {
@@ -80,10 +84,7 @@ export const usePWA = () => {
     promptInstall,
     showIosGuide,
     dismissIosGuide: () => setShowIosGuide(false),
-    needRefresh,
     offlineReady,
-    applyUpdate: () => updateServiceWorker(true),
-    dismissUpdate: () => setNeedRefresh(false),
     dismissOfflineReady: () => setOfflineReady(false),
   };
 };
