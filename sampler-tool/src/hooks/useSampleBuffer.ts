@@ -75,10 +75,10 @@ export const useSampleBuffer = (initAudioContext) => {
    * boundary updates two siblings at once and we don't want React to
    * settle on a stale intermediate state.
    */
-  const updateMany = useCallback((updates) => {
-    setSamples((prev) => {
-      const next = { ...prev };
-      Object.entries(updates).forEach(([padId, partial]) => {
+  const updateMany = useCallback((updates: Record<string, any>) => {
+    setSamples((prev: any) => {
+      const next: any = { ...prev };
+      Object.entries(updates).forEach(([padId, partial]: [string, any]) => {
         if (next[padId]) {
           next[padId] = { ...next[padId], ...partial };
         } else {

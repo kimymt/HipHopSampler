@@ -225,7 +225,7 @@ export default function App() {
   });
 
   const selectedPattern = selectedPadId ? patterns[selectedPadId] : null;
-  const loadedCount = Object.values(samples).filter((s) => s && s.buffer).length;
+  const loadedCount = Object.values(samples).filter((s) => !!s && !!s.buffer).length;
 
   const samplePanel = (
     <>

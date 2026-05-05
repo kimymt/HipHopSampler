@@ -1,4 +1,17 @@
 import { useCallback, useMemo } from 'react';
+import type { Sample, SampleMap } from '../types';
+
+export interface ChopBoundaries {
+  times: number[];
+  padIdsAt: { prev: string | null; next: string | null }[];
+  currentIndex: number;
+}
+
+interface UseChopGroupsArgs {
+  selectedSample: Sample | null;
+  samples: SampleMap;
+  updateMany: (updates: Record<string, Partial<Sample>>) => void;
+}
 
 /**
  * Derives chop boundaries (vertical lines on the waveform display) for the
@@ -6,21 +19,13 @@ import { useCallback, useMemo } from 'react';
  *
  * Boundary dragging mutates the IN time of one sibling and the OUT time of
  * its neighbor in a single `updateMany` call so the slices stay contiguous.
- *
- * Inputs:
- * - selectedSample: the currently selected sample object (or null)
- * - samples: full samples map (used to find chopGroup siblings)
- * - updateMany: persisted-samples updateMany setter
- *
- * Outputs:
- * - chopBoundaries: { times: number[], padIdsAt: { prev, next }[], currentIndex } or null
- * - handleBoundaryDrag: (boundaryIdx, newTime) => void
  */
-export function useChopGroups({ selectedSample, samples, updateMany }) {
-  const chopBoundaries = useMemo(() => {
+export function useChopGroups({ selectedSample, samples, updateMany }: UseChopGroupsArgs) {
+  const chopBoundaries = useMemo<ChopBoundaries | null>(() => {
     if (!selectedSample || !selectedSample.chopGroup) return null;
-    const siblings = Object.entries(samples)
-      .filter(([, s]) => s?.chopGroup === selectedSample.chopGroup)
+    const entries = Object.entries(samples) as [string, Sample | null | undefined][];
+    const siblings: [string, Sample][] = entries
+      .filter((entry): entry is [string, Sample] => !!entry[1] && entry[1].chopGroup === selectedSample.chopGroup)
       .sort((a, b) => (a[1].chopIndex ?? 0) - (b[1].chopIndex ?? 0));
     if (siblings.length === 0) return null;
     const boundaries = [siblings[0][1].startTime];
@@ -35,7 +40,7 @@ export function useChopGroups({ selectedSample, samples, updateMany }) {
   }, [selectedSample, samples]);
 
   const handleBoundaryDrag = useCallback(
-    (boundaryIdx, newTime) => {
+    (boundaryIdx: number, newTime: number) => {
       if (!chopBoundaries || !selectedSample?.buffer) return;
       const { padIdsAt, times } = chopBoundaries;
       const at = padIdsAt[boundaryIdx];
@@ -47,7 +52,7 @@ export function useChopGroups({ selectedSample, samples, updateMany }) {
           : selectedSample.buffer.duration;
       const t = Math.max(lo, Math.min(hi, newTime));
 
-      const updates = {};
+      const updates: Record<string, Partial<Sample>> = {};
       if (at.prev) updates[at.prev] = { endTime: t };
       if (at.next) updates[at.next] = { startTime: t };
       if (Object.keys(updates).length) updateMany(updates);
