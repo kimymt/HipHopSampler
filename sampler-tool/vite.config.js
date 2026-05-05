@@ -18,6 +18,12 @@ export default defineConfig({
       // Cache the app shell aggressively. User audio is NOT in here — that lives in IndexedDB (phase 2).
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,ico}'],
+        // Skip precaching the WebLLM library chunk (~6MB). It's lazy-loaded
+        // when the user opts into AI suggestions, and the library itself
+        // caches model weights in IndexedDB. Forcing it through SW precache
+        // would inflate the install footprint for every visitor (most never
+        // opt in) and exceeds the 4MB single-asset cap below.
+        globIgnores: ['**/lib-*.js'],
         // Don't precache the giant audio decoder maps if they appear later
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: 'index.html',
