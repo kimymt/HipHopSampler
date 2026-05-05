@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { InstallButton } from './InstallButton';
 import { StorageBadge } from './StorageBadge';
 import { OfflineBadge } from './OfflineBadge';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import './TransportBar.css';
+
+const BPM_MIN = 60;
+const BPM_MAX = 200;
+const BPM_HOLD_DELAY = 400;
+const BPM_HOLD_INTERVAL = 80;
+const clampBpm = (n) => Math.max(BPM_MIN, Math.min(BPM_MAX, n));
 
 export const TransportBar = ({
   bpm,
@@ -21,6 +27,28 @@ export const TransportBar = ({
   online = true,
 }) => {
   const isMobile = useIsMobile();
+
+  // Long-press auto-repeat for the BPM stepper. Tap = ±1, hold = continuous.
+  const stepperHold = useRef(null);
+  const stepperStart = useRef(null);
+  const stopStepper = useCallback(() => {
+    if (stepperStart.current) clearTimeout(stepperStart.current);
+    if (stepperHold.current) clearInterval(stepperHold.current);
+    stepperStart.current = null;
+    stepperHold.current = null;
+  }, []);
+  useEffect(() => stopStepper, [stopStepper]);
+  const startStepper = useCallback(
+    (delta) => {
+      onBpmChange((cur) => clampBpm(cur + delta));
+      stepperStart.current = setTimeout(() => {
+        stepperHold.current = setInterval(() => {
+          onBpmChange((cur) => clampBpm(cur + delta));
+        }, BPM_HOLD_INTERVAL);
+      }, BPM_HOLD_DELAY);
+    },
+    [onBpmChange]
+  );
 
   return (
     <div className={`transport-bar ${isMobile ? 'tight' : ''}`}>
@@ -52,18 +80,55 @@ export const TransportBar = ({
           </button>
         )}
 
-        <div className="bpm-control">
-          <label htmlFor="bpm-input">BPM</label>
-          <input
-            id="bpm-input"
-            type="number"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            min="60"
-            max="200"
-            value={bpm}
-            onChange={(e) => onBpmChange(parseInt(e.target.value) || 90)}
-          />
+        <div className="bpm-stepper">
+          <button
+            type="button"
+            className="bpm-step bpm-step--down"
+            aria-label="BPMを下げる"
+            title="BPM −"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              startStepper(-1);
+            }}
+            onPointerUp={stopStepper}
+            onPointerLeave={stopStepper}
+            onPointerCancel={stopStepper}
+            disabled={bpm <= BPM_MIN}
+          >
+            −
+          </button>
+          <div className="bpm-control">
+            <label htmlFor="bpm-input">BPM</label>
+            <input
+              id="bpm-input"
+              type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              min={BPM_MIN}
+              max={BPM_MAX}
+              value={bpm}
+              onChange={(e) => {
+                const n = parseInt(e.target.value);
+                onBpmChange(Number.isFinite(n) ? clampBpm(n) : 90);
+              }}
+            />
+          </div>
+          <button
+            type="button"
+            className="bpm-step bpm-step--up"
+            aria-label="BPMを上げる"
+            title="BPM +"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              startStepper(1);
+            }}
+            onPointerUp={stopStepper}
+            onPointerLeave={stopStepper}
+            onPointerCancel={stopStepper}
+            disabled={bpm >= BPM_MAX}
+          >
+            +
+          </button>
         </div>
       </div>
 
@@ -82,7 +147,7 @@ export const TransportBar = ({
 
         <OfflineBadge online={online} />
 
-        {/* Desktop: inline. Mobile: hidden, accessible via ⚙ settings sheet. */}
+        {/* Desktop: inline storage/install/tour. All viewports: settings cog. */}
         {!isMobile && (
           <>
             <StorageBadge info={storageInfo} />
@@ -98,16 +163,14 @@ export const TransportBar = ({
           </>
         )}
 
-        {isMobile && (
-          <button
-            className="settings-btn"
-            onClick={onSettingsClick}
-            title="設定"
-            aria-label="Settings"
-          >
-            ⚙
-          </button>
-        )}
+        <button
+          className="settings-btn"
+          onClick={onSettingsClick}
+          title="設定"
+          aria-label="Settings"
+        >
+          ⚙
+        </button>
       </div>
     </div>
   );

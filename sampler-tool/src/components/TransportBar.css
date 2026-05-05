@@ -106,12 +106,57 @@
   50% { opacity: 0.7; }
 }
 
+.bpm-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+}
+
+.bpm-step {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--bone-darker);
+  background: linear-gradient(180deg, var(--bone-light), var(--bone));
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 2px 4px rgba(60, 50, 30, 0.18);
+}
+
+.bpm-step:hover:not(:disabled) {
+  color: var(--te-orange);
+  border-color: var(--te-orange);
+}
+
+.bpm-step:active:not(:disabled) {
+  background: linear-gradient(180deg, var(--bone), var(--bone-dark));
+  box-shadow:
+    inset 0 1px 3px rgba(60, 50, 30, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.bpm-step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .bpm-control {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-left: 12px;
   padding: 4px 14px;
   height: 48px;
   box-sizing: border-box;
@@ -301,8 +346,18 @@
   /* BPM and PADS are LCD-style displays — unify them to the same height
      for visual rhythm. Other elements (LED pill, settings, play, logo)
      keep their natural sizes. */
-  .transport-bar.tight .bpm-control {
+  .transport-bar.tight .bpm-stepper {
     margin-left: 4px;
+    gap: 4px;
+  }
+
+  .transport-bar.tight .bpm-step {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .transport-bar.tight .bpm-control {
     height: 40px;
     padding: 2px 10px;
   }
@@ -365,8 +420,18 @@
     display: none;
   }
 
-  .transport-bar.tight .bpm-control {
+  .transport-bar.tight .bpm-stepper {
     margin-left: 0;
+    gap: 2px;
+  }
+
+  .transport-bar.tight .bpm-step {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  .transport-bar.tight .bpm-control {
     padding: 2px 6px;
   }
 
