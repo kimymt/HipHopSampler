@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0.1] - 2026-05-05
+
+### Fixed
+- CSP was blocking WebLLM model downloads (`Refused to connect to 'https://huggingface.co/mlc-ai/...'`). Added `https://huggingface.co`, `https://*.huggingface.co`, and `https://raw.githubusercontent.com` to `connect-src`, plus `'wasm-unsafe-eval'` to `script-src` so the library can compile WASM modules at runtime. Without this, the AI 提案 toggle would lock at 0% indefinitely on production.
+
 ## [0.2.0.0] - 2026-05-05
 
 ### Added
