@@ -346,6 +346,7 @@ export default function App() {
         onInstallClick={pwa.promptInstall}
         onHelpClick={() => setTourOpen(true)}
         storageInfo={storageInfo}
+        audioContext={audioContext}
       />
 
       <Tour open={tourOpen} onClose={handleTourClose} />
