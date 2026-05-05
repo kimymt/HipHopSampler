@@ -27,7 +27,7 @@ const STEPS = [
   },
   {
     title: 'サンプルを読み込む — 3つの方法',
-    body: '空パッドには2つの小さなボタンが付いています。左下の 🎙 はマイクから直接録音できます。右下の + は音声ファイル (WAV / MP3) を選択できます。デスクトップでは画面に直接ドラッグ&ドロップしても読み込めます。',
+    body: '空パッドには2つの小さなボタンが付いています。左下の 🎙 はマイクから直接録音できます。右下の + は音声ファイル (WAV / MP3) を選択できます。デスクトップでは、対象のパッドをまずタップして青枠で選択してから、画面にファイルをドラッグ&ドロップしても読み込めます。',
     target: '.pad-grid',
     position: 'right',
   },
@@ -87,8 +87,16 @@ const STEPS = [
   },
 ];
 
+// Exported so other UI (SettingsSheet) can describe the tour without
+// going stale every time we add or remove a step.
+export const TOUR_STEP_COUNT = STEPS.length;
+
 const TOOLTIP_GAP = 14;
 const TOOLTIP_W = 360;
+// Tooltip width + 12px viewport edge margin on each side.
+// Below this viewport width, side-positions ('left' / 'right') don't have
+// horizontal room and we auto-rotate to 'bottom' / 'top'.
+const SIDE_POSITION_MIN_VW = TOOLTIP_W + 24 + 80; // 464
 
 const computePosition = (rect, position) => {
   if (!rect) {
@@ -100,8 +108,20 @@ const computePosition = (rect, position) => {
   }
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+
+  // Auto-rotate side positions to bottom/top on narrow viewports — there
+  // simply isn't 360px of horizontal room for the tooltip to live to the
+  // side of the spotlight on phones. Pick whichever vertical side has more
+  // room.
+  let pos = position;
+  if ((pos === 'left' || pos === 'right') && vw < SIDE_POSITION_MIN_VW) {
+    const spaceBelow = vh - rect.bottom;
+    const spaceAbove = rect.top;
+    pos = spaceBelow >= spaceAbove ? 'bottom' : 'top';
+  }
+
   let left, top;
-  switch (position) {
+  switch (pos) {
     case 'top':
       left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
       top = rect.top - TOOLTIP_GAP;
@@ -110,10 +130,14 @@ const computePosition = (rect, position) => {
       left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
       top = rect.bottom + TOOLTIP_GAP;
       return { left: clamp(left, 12, vw - TOOLTIP_W - 12), top };
-    case 'left':
-      left = rect.left - TOOLTIP_GAP;
+    case 'left': {
+      // Tooltip uses translate(-100%, -50%) so visible left edge is
+      // (left - TOOLTIP_W). Keep that >= 12 so it never escapes the viewport.
+      const wanted = rect.left - TOOLTIP_GAP;
+      const minLeft = TOOLTIP_W + 12;
       top = rect.top + rect.height / 2;
-      return { left, top, transform: 'translate(-100%, -50%)' };
+      return { left: Math.max(wanted, minLeft), top, transform: 'translate(-100%, -50%)' };
+    }
     case 'right':
     default:
       left = rect.right + TOOLTIP_GAP;

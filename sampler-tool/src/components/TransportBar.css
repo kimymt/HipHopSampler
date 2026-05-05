@@ -370,8 +370,11 @@
     padding: 2px 6px;
   }
 
+  /* 36px clipped 3-digit BPM values (e.g. "120" — scrollWidth 47px at 16px
+     monospace). 48px fits 60-200 BPM range without clipping; total bar
+     width still fits the 320px iPhone SE budget. */
   .transport-bar.tight .bpm-control input {
-    width: 36px;
+    width: 48px;
     font-size: 16px;
   }
 

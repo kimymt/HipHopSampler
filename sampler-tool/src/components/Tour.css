@@ -8,7 +8,10 @@
 .tour-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(20, 16, 12, 0.55);
+  /* Lighter than 0.55 so the spotlighted area pops more clearly against
+     the surrounding dim. The combination of this + the spotlight's own
+     box-shadow halo creates the "bright island" effect. */
+  background: rgba(20, 16, 12, 0.4);
   backdrop-filter: blur(1.5px);
   pointer-events: auto;
   cursor: pointer;
@@ -18,10 +21,16 @@
   position: fixed;
   border-radius: 10px;
   pointer-events: none;
+  /* Bright, multi-ring spotlight so it reads against any background:
+     - inner cream halo lifts the outline off dark surfaces (transport bar)
+     - thicker bright orange ring for chroma
+     - wide warm glow extends visibility further outward
+     - matching backdrop darkening (lighter than backdrop alone for clearer pop) */
   box-shadow:
-    0 0 0 9999px rgba(20, 16, 12, 0.55),
-    0 0 0 3px var(--te-orange),
-    0 0 24px rgba(240, 74, 31, 0.6);
+    0 0 0 9999px rgba(20, 16, 12, 0.4),
+    0 0 0 2px rgba(255, 245, 220, 0.95),
+    0 0 0 6px var(--te-orange-light, #ff7848),
+    0 0 28px 4px rgba(255, 130, 60, 0.7);
   transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
