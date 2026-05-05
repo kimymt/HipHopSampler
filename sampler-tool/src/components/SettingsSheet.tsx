@@ -1,5 +1,6 @@
 import React from 'react';
 import { StorageBadge } from './StorageBadge';
+import { LatencyBadge } from './LatencyBadge';
 import { TOUR_STEP_COUNT } from './Tour';
 import './SettingsSheet.css';
 
@@ -16,6 +17,7 @@ export const SettingsSheet = ({
   onInstallClick,
   onHelpClick,
   storageInfo,
+  audioContext = null,
 }) => {
   if (!open) return null;
   return (
@@ -75,6 +77,14 @@ export const SettingsSheet = ({
             <span>サンプルとパターンの保存状態</span>
           </div>
           <StorageBadge info={storageInfo} />
+        </div>
+
+        <div className="settings-row">
+          <div className="settings-row-label">
+            <strong>⚡ オーディオ遅延</strong>
+            <span>パッドを叩いてから音が出るまでの実測値</span>
+          </div>
+          <LatencyBadge audioContext={audioContext} />
         </div>
       </div>
     </div>
