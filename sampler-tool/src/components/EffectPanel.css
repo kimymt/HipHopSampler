@@ -167,7 +167,7 @@
   letter-spacing: 0.3px;
 }
 
-@media (max-width: 767px) {
+@media (hover: none), (pointer: coarse) {
   .effect-panel {
     padding: 10px 12px;
   }
