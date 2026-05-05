@@ -8,8 +8,17 @@ import { useCallback, useRef } from 'react';
  * audio clock. Without an explicit stop() it plays through, even after our
  * sequencer scheduler is torn down.
  */
-export const useAudioEngine = (initAudioContext) => {
+export const useAudioEngine = (initAudioContext, getDestination) => {
   const activeRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+
+  // Resolve the per-call destination so changes to the master FX bus (mount /
+  // unmount of effect, bypass toggle) take effect on subsequent triggers
+  // without re-creating this hook. Falls back to ctx.destination if no
+  // override is provided (existing call sites stay valid).
+  const resolveDestination = useCallback((ctx: AudioContext): AudioNode => {
+    const override = getDestination?.();
+    return override ?? ctx.destination;
+  }, [getDestination]);
 
   const trigger = useCallback((sample, when = 0) => {
     const ctx = initAudioContext();
@@ -26,7 +35,7 @@ export const useAudioEngine = (initAudioContext) => {
 
     source.connect(gain);
     gain.connect(panner);
-    panner.connect(ctx.destination);
+    panner.connect(resolveDestination(ctx));
 
     const offset = sample.startTime ?? 0;
     const end = sample.endTime ?? sample.buffer.duration;
@@ -66,7 +75,7 @@ export const useAudioEngine = (initAudioContext) => {
 
     source.connect(gain);
     gain.connect(panner);
-    panner.connect(ctx.destination);
+    panner.connect(resolveDestination(ctx));
 
     const startedAt = ctx.currentTime;
     const initialOffset = source.loopStart;

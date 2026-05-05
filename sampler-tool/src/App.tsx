@@ -26,6 +26,9 @@ import { usePersistedState } from './hooks/usePersistence';
 import { useStorageQuota } from './hooks/useStorageQuota';
 import { useAutoChop } from './hooks/useAutoChop';
 import { useChopGroups } from './hooks/useChopGroups';
+import { useEffects } from './hooks/useEffects';
+import { DEFAULT_FX_STATE } from './effects/types';
+import { EffectPanel } from './components/EffectPanel';
 import { clearAll } from './utils/sampleStore';
 import './App.css';
 
@@ -35,7 +38,19 @@ export default function App() {
   const { audioContext, initAudioContext, contextState, isInitialized: audioInit, resumeContext } = useAudioContext();
   const online = useOnlineStatus();
   const persist = usePersistentStorage();
-  const { trigger, loopTrim, stopAll } = useAudioEngine(initAudioContext);
+  // Master FX bus: declared early so useAudioEngine can route through it.
+  // `bpm` is owned here too (was lower in file) because the delay effect
+  // needs to tempo-sync to it.
+  const [bpm, setBpm] = usePersistedState('bpm', 90);
+  const [fx, setFx] = usePersistedState('fx', DEFAULT_FX_STATE);
+  const [fxBypass, setFxBypass] = useState(false);
+  const { getMasterInput } = useEffects({
+    initAudioContext,
+    fx,
+    bpm,
+    bypass: fxBypass,
+  });
+  const { trigger, loopTrim, stopAll } = useAudioEngine(initAudioContext, getMasterInput);
   const {
     samples,
     restoreState,
@@ -48,7 +63,6 @@ export default function App() {
   } = usePersistedSamples(initAudioContext);
   const storageInfo = useStorageQuota();
   const [selectedPadId, setSelectedPadId] = useState(null);
-  const [bpm, setBpm] = usePersistedState('bpm', 90);
   const [patterns, setPatterns] = usePersistedState('patterns', {});
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -313,6 +327,15 @@ export default function App() {
               </section>
             )}
           </div>
+
+          <section className="workspace-fx">
+            <EffectPanel
+              fx={fx}
+              onFxChange={setFx}
+              bypass={fxBypass}
+              onBypassChange={setFxBypass}
+            />
+          </section>
 
           <section className="workspace-bottom">
             <Sequencer
