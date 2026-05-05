@@ -87,6 +87,10 @@ const STEPS = [
   },
 ];
 
+// Exported so other UI (SettingsSheet) can describe the tour without
+// going stale every time we add or remove a step.
+export const TOUR_STEP_COUNT = STEPS.length;
+
 const TOOLTIP_GAP = 14;
 const TOOLTIP_W = 360;
 

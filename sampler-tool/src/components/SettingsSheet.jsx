@@ -1,5 +1,6 @@
 import React from 'react';
 import { StorageBadge } from './StorageBadge';
+import { TOUR_STEP_COUNT } from './Tour';
 import './SettingsSheet.css';
 
 /**
@@ -58,7 +59,7 @@ export const SettingsSheet = ({
         <div className="settings-row">
           <div className="settings-row-label">
             <strong>? 操作ガイド</strong>
-            <span>13ステップのツアーを再生</span>
+            <span>{TOUR_STEP_COUNT}ステップのツアーを再生</span>
           </div>
           <button
             className="settings-action"
