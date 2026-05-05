@@ -1,16 +1,14 @@
 # Hip Hop Sampler
 
-🎛 **Live**: https://sampler.mymt.casa (CF Pages: https://hiphopsampler.pages.dev)
+🎛 **Live**: https://sampler.mymt.casa
 
 ブラウザベースのサンプリングツールです。インストール不要、PWA としてホーム画面に追加すればオフラインでも動作します。
 
 Teenage Engineering EP-133 / Akai MPC 風の UI で、Web Audio API ベース。スマートフォン (iPhone / Android) でも、デスクトップでも同じ操作感で使えます。
 
-> 🤖 本プロジェクトの開発には [**gstack**](https://github.com/garrytan/gstack) (Claude Code 用の AI コーディング支援ツールキット) を全面的に活用しました。`/qa` (テスト + 自動修正)、`/cso` (セキュリティ監査)、`/review` (PR レビュー)、`/ship` (PR 作成・マージ) などの skill が品質保証と開発スピードに大きく寄与しています。
+> 🤖 本プロジェクトの開発には [**gstack**](https://github.com/garrytan/gstack) (Claude Code 用の AI コーディング支援ツールキット) を全面的に活用しました。
 
 ![Hip Hop Sampler スクリーンショット](https://hiphopsampler.pages.dev/pwa-512.png)
-
-> 本リポジトリのアプリ本体は [`sampler-tool/`](sampler-tool/) サブディレクトリにあります。Cloudflare Pages のビルド設定でこのフォルダを Root directory に指定します (後述)。
 
 ---
 
@@ -62,14 +60,14 @@ Teenage Engineering EP-133 / Akai MPC 風の UI で、Web Audio API ベース。
 
 ---
 
-## Cloudflare Pages にデプロイする (他人向け手順)
+## 自分のCloudflare Pagesで使えるようにするには
 
 このリポジトリを fork または clone して、自分の Cloudflare アカウントで運用するための手順です。フォークすれば数分で完全に同じものが立ち上がります。
+> 本リポジトリのアプリ本体は [`sampler-tool/`](sampler-tool/) サブディレクトリにあります。Cloudflare Pages のビルド設定でこのフォルダを Root directory に指定します (後述)。
 
 ### 必要なもの
 - GitHub アカウント
 - Cloudflare アカウント (無料で OK)
-- (オプション) 独自ドメイン — 持っていればカスタムドメイン設定可能
 
 ### 手順
 
@@ -78,7 +76,7 @@ GitHub の `kimymt/HipHopSampler` ページ右上 **Fork** ボタンから自分
 
 #### 2. Cloudflare ダッシュボードに入る
 1. [dash.cloudflare.com](https://dash.cloudflare.com) → 左メニュー **Workers & Pages**
-2. **Create** → **Pages** タブ → **Connect to Git**
+2. **Create application** → Looking to deploy Pages? **Get started** → Import an existing Git repository **Get started**
 3. 自分の GitHub アカウントを認可し、fork した `HipHopSampler` リポジトリを選択
 4. **Begin setup** をクリック
 
