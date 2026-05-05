@@ -114,4 +114,12 @@
   overflow-y: auto;
   flex: 1;
   -webkit-overflow-scrolling: touch;
+  /* Tell iOS Safari "vertical scroll wins" so native scroll engages without
+     latency when the user drags inside the body. Without this hint, Safari
+     sometimes waits ~300ms to decide whether the touch is a scroll or tap,
+     which feels like the sheet "isn't scrolling". */
+  touch-action: pan-y;
+  /* Don't propagate scroll momentum to the page behind when the sheet hits
+     its scroll edge (rubber-band stays inside the sheet). */
+  overscroll-behavior: contain;
 }
