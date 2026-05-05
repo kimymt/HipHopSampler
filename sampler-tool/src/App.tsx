@@ -29,6 +29,7 @@ import { useChopGroups } from './hooks/useChopGroups';
 import { useEffects } from './hooks/useEffects';
 import { DEFAULT_FX_STATE } from './effects/types';
 import { EffectPanel } from './components/EffectPanel';
+import { padIdToDisplayString } from './utils/padId';
 import { clearAll } from './utils/sampleStore';
 import './App.css';
 
@@ -241,8 +242,11 @@ export default function App() {
   const selectedPattern = selectedPadId ? patterns[selectedPadId] : null;
   const loadedCount = Object.values(samples).filter((s) => !!s && !!s.buffer).length;
 
+  // Wrap in a flex column so SampleDisplay (waveform) and Mixer (pad info)
+  // get clean vertical separation. Without the gap they used to abut each
+  // other inside the BottomSheet body, making the boundary visually unclear.
   const samplePanel = (
-    <>
+    <div className="sample-panel-stack">
       <SampleDisplay
         sample={selectedSample}
         chopBoundaries={chopBoundaries}
@@ -270,7 +274,7 @@ export default function App() {
         onAutoChop={runAutoChop}
         chopMessage={chopMessage}
       />
-    </>
+    </div>
   );
 
   return (
@@ -354,7 +358,7 @@ export default function App() {
         <BottomSheet
           open={sampleSheetOpen && !!selectedSample?.buffer}
           onClose={() => setSampleSheetOpen(false)}
-          title={selectedSample ? `SAMPLE · PAD ${selectedPadId}` : 'SAMPLE'}
+          title={selectedSample && selectedPadId ? `SAMPLE · PAD ${padIdToDisplayString(selectedPadId)}` : 'SAMPLE'}
         >
           {samplePanel}
         </BottomSheet>

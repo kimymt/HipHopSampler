@@ -29,6 +29,10 @@ export interface EffectMeta {
   description: string;
 }
 
+// Descriptions: keep one consistent shape across all effects — a short
+// "what it does" sentence + the direction the knob takes (低い → 高い).
+// Avoid raw numeric anchors like "0=..., 1=..." since the slider already
+// shows percentages.
 export const EFFECT_META: Record<EffectType, EffectMeta> = {
   none: {
     type: 'none',
@@ -40,31 +44,31 @@ export const EFFECT_META: Record<EffectType, EffectMeta> = {
     type: 'reverb',
     label: 'REVERB',
     paramLabel: 'SIZE',
-    description: '部屋の広がり (0=部屋, 1=ホール)',
+    description: '部屋の広がり (狭い → 広い)',
   },
   delay: {
     type: 'delay',
     label: 'DELAY',
     paramLabel: 'TIME',
-    description: 'やまびこ (0=短, 1=長)',
+    description: 'やまびこの間隔 (短い → 長い)',
   },
   filter: {
     type: 'filter',
     label: 'FILTER',
     paramLabel: 'CUTOFF',
-    description: 'モコモコさせる/ハッキリさせる',
+    description: '音色を変える (モコモコ → ハッキリ)',
   },
   saturation: {
     type: 'saturation',
     label: 'SATURATE',
     paramLabel: 'DRIVE',
-    description: 'アナログ風の温かい歪み',
+    description: 'アナログ風の歪み (薄い → 濃い)',
   },
   lofi: {
     type: 'lofi',
     label: 'LO-FI',
     paramLabel: 'CRUSH',
-    description: 'カセットテープ風の劣化',
+    description: 'カセットテープ風の劣化 (弱い → 強い)',
   },
 };
 

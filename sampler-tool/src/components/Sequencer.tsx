@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '../hooks/useMediaQuery';
+import { padIdToDisplayString } from '../utils/padId';
 import './Sequencer.css';
 
 const STEPS = 16;
@@ -30,7 +31,9 @@ export const Sequencer = ({ pattern, onToggleStep, onClear, currentStep, selecte
         <div className="sequencer-title">
           <span className="seq-label">SEQUENCER</span>
           <span className="seq-target">
-            {selectedPadId ? `→ ${sampleName || 'Pad ' + selectedPadId}` : '→ select a pad'}
+            {selectedPadId
+              ? `→ ${sampleName || `PAD ${padIdToDisplayString(selectedPadId)}`}`
+              : '→ select a pad'}
           </span>
         </div>
         <div className="sequencer-actions">
