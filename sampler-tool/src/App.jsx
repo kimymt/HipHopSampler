@@ -24,17 +24,12 @@ import { useMicRecorder } from './hooks/useMicRecorder';
 import { useSequencer } from './hooks/useSequencer';
 import { usePersistedState } from './hooks/usePersistence';
 import { useStorageQuota } from './hooks/useStorageQuota';
-import { detectOnsets, buildSlicePoints } from './utils/onsetDetect';
+import { useAutoChop } from './hooks/useAutoChop';
+import { useChopGroups } from './hooks/useChopGroups';
 import { clearAll } from './utils/sampleStore';
 import './App.css';
 
 const TOUR_FLAG = 'sampler.tour.completed';
-
-const ALL_PAD_IDS = (() => {
-  const out = [];
-  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) out.push(`${r}-${c}`);
-  return out;
-})();
 
 export default function App() {
   const { audioContext, initAudioContext, contextState, isInitialized: audioInit, resumeContext } = useAudioContext();
@@ -59,7 +54,6 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
   const [tourOpen, setTourOpen] = useState(false);
-  const [chopMessage, setChopMessage] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sampleSheetOpen, setSampleSheetOpen] = useState(false);
   const pwa = usePWA();
@@ -152,6 +146,11 @@ export default function App() {
     return () => clearTimeout(t);
   }, [mic.error, mic]);
 
+  // Selected sample is derived once and consumed by every downstream handler /
+  // hook below. Declared early so handlers don't reference it before init
+  // (was a `no-use-before-define` smell in the pre-refactor flow).
+  const selectedSample = selectedPadId ? getSample(selectedPadId) : null;
+
   const handleToggleStep = (stepIdx) => {
     if (!selectedPadId) return;
     setPatterns((prev) => {
@@ -202,91 +201,18 @@ export default function App() {
     updateSampleProperty(selectedPadId, 'endTime', next);
   };
 
-  // ── AUTO CHOP ─────────────────────────────────────────────
-  const selectedSample = selectedPadId ? getSample(selectedPadId) : null;
-
-  const handleAutoChop = () => {
-    if (!selectedSample || !selectedSample.buffer) return;
-    stopAll();
-
-    const buffer = selectedSample.buffer;
-    const onsets = detectOnsets(buffer);
-    const points = buildSlicePoints(onsets, buffer.duration);
-    const sliceCount = points.length - 1;
-
-    if (sliceCount < 2) {
-      setChopMessage('音の境界が見つかりません。素材が短いか、音量変化が少ないかも');
-      setTimeout(() => setChopMessage(null), 4000);
-      return;
-    }
-
-    // Targets: start at the selected pad, walk forward, fill empty pads first.
-    // If we run out of empty pads, overwrite from the start of the chop range.
-    const startIdx = ALL_PAD_IDS.indexOf(selectedPadId);
-    const ordered = [
-      ...ALL_PAD_IDS.slice(startIdx),
-      ...ALL_PAD_IDS.slice(0, startIdx),
-    ];
-    const targets = ordered.slice(0, sliceCount);
-
-    const groupId = `chop-${Date.now().toString(36)}`;
-    const baseName = selectedSample.name;
-    // Siblings share the source bytes — propagate sourceId so restore works.
-    const sourceId = selectedSample.sourceId;
-    const updates = {};
-    targets.forEach((padId, idx) => {
-      updates[padId] = {
-        buffer,
-        sourceId,
-        name: idx === 0 ? baseName : `${baseName} #${idx + 1}`,
-        startTime: points[idx],
-        endTime: points[idx + 1],
-        loop: false,
-        loopStart: 0,
-        loopEnd: buffer.duration,
-        volume: 1,
-        pan: 0,
-        chopGroup: groupId,
-        chopIndex: idx,
-      };
-    });
-    updateMany(updates);
-    setChopMessage(`${sliceCount}スライスをパッドに割当`);
-    setTimeout(() => setChopMessage(null), 3000);
-  };
-
-  // Compute chop boundaries (vertical lines on waveform) for the current pad's group
-  const chopBoundaries = useMemo(() => {
-    if (!selectedSample || !selectedSample.chopGroup) return null;
-    const siblings = Object.entries(samples)
-      .filter(([_, s]) => s?.chopGroup === selectedSample.chopGroup)
-      .sort((a, b) => (a[1].chopIndex ?? 0) - (b[1].chopIndex ?? 0));
-    if (siblings.length === 0) return null;
-    const boundaries = [siblings[0][1].startTime];
-    siblings.forEach(([_, s]) => boundaries.push(s.endTime));
-    // Map index → padIds it touches
-    const padIdsAt = boundaries.map((_, i) => ({
-      // boundary i sits between sibling i-1 (out) and sibling i (in)
-      prev: i > 0 ? siblings[i - 1][0] : null,
-      next: i < siblings.length ? siblings[i][0] : null,
-    }));
-    return { times: boundaries, padIdsAt, currentIndex: selectedSample.chopIndex ?? 0 };
-  }, [selectedSample, samples]);
-
-  const handleBoundaryDrag = (boundaryIdx, newTime) => {
-    if (!chopBoundaries) return;
-    const { padIdsAt, times } = chopBoundaries;
-    const at = padIdsAt[boundaryIdx];
-    // Clamp within neighbors so slices don't cross
-    const lo = boundaryIdx > 0 ? times[boundaryIdx - 1] + 0.01 : 0;
-    const hi = boundaryIdx < times.length - 1 ? times[boundaryIdx + 1] - 0.01 : selectedSample.buffer.duration;
-    const t = Math.max(lo, Math.min(hi, newTime));
-
-    const updates = {};
-    if (at.prev) updates[at.prev] = { endTime: t };
-    if (at.next) updates[at.next] = { startTime: t };
-    if (Object.keys(updates).length) updateMany(updates);
-  };
+  // ── AUTO CHOP + chop group boundaries ─────────────────────
+  const { chopMessage, runAutoChop } = useAutoChop({
+    selectedSample,
+    selectedPadId,
+    stopAll,
+    updateMany,
+  });
+  const { chopBoundaries, handleBoundaryDrag } = useChopGroups({
+    selectedSample,
+    samples,
+    updateMany,
+  });
 
   useSequencer({
     audioContext,
@@ -327,7 +253,7 @@ export default function App() {
           setSelectedPadId(null);
           setSampleSheetOpen(false);
         }}
-        onAutoChop={handleAutoChop}
+        onAutoChop={runAutoChop}
         chopMessage={chopMessage}
       />
     </>
