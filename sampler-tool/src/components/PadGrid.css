@@ -243,7 +243,7 @@
   border-radius: 1px;
 }
 
-@media (max-width: 767px) {
+@media (hover: none), (pointer: coarse) {
   .pad-mic-btn {
     width: 32px;
     height: 32px;
