@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2.1] - 2026-05-05
+
+### Fixed
+- Service worker now auto-applies new versions without requiring users to tap an "更新" button. Previously, users who dismissed or ignored the update toast would stay on the cached old bundle indefinitely (this caused the v0.1.2.0 chips to appear missing on devices that had visited before). With autoUpdate + clientsClaim + skipWaiting, the new SW seizes control on activation and the new bundle is served on the next page load.
+- Reduced SW update polling from 1 hour to 30 minutes so deploys propagate to long-lived sessions (e.g. an iPad PWA left open) within half an hour.
+
+### Removed
+- UpdateToast "新バージョンあります" prompt and its associated `usePWA` hook surface (`needRefresh` / `applyUpdate` / `dismissUpdate`). Updates are now silent and automatic.
+
 ## [0.1.2.0] - 2026-05-05
 
 ### Added

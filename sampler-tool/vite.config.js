@@ -7,8 +7,12 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // App auto-applies new SW versions. UpdateToast prompts the user before reloading.
-      registerType: 'prompt',
+      // SW updates auto-apply silently. New version takes effect on next page load.
+      // Why not 'prompt': users would ignore the "更新" button and stay stuck on the
+      // old bundle forever (the cause of the 2026-05-05 production chip-missing bug).
+      // With autoUpdate + clientsClaim, the new SW skips waiting and seizes control
+      // on activation; the new bundle is served on the next navigation.
+      registerType: 'autoUpdate',
       injectRegister: 'auto',
 
       // Cache the app shell aggressively. User audio is NOT in here — that lives in IndexedDB (phase 2).
@@ -18,6 +22,12 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
+        // Take control of any uncontrolled tabs as soon as the new SW activates,
+        // so the next reload (or next route navigation) gets fresh assets.
+        // Safe here: the SPA reads JS once at boot, so mid-session SW takeover
+        // does not affect the running tab's behavior.
+        clientsClaim: true,
+        skipWaiting: true,
       },
 
       // Dev-mode SW so we can test install/update flows without a build
