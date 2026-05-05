@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { EFFECT_META, EFFECT_TYPES, type EffectType, type FxState } from '../effects/types';
+import { EffectVibeChips } from './EffectVibeChips';
 import './EffectPanel.css';
 
 interface Props {
@@ -16,10 +17,36 @@ interface Props {
  *   The persona is "DAW挫折者". Effect chains are exactly the kind of
  *   complexity that drives beginners away. SP-404 / EP-133 famously stay
  *   single-effect-at-a-time and still feel powerful — we mirror that.
+ *
+ * Phase 2A (DESIGN.md §9.15):
+ *   `EffectVibeChips` sits above `effect-type-row` as a 1-tap shortcut to
+ *   {type, wet, param} presets. Type buttons + knobs remain as the manual
+ *   path, so users see chip → knob ramp animation and learn the mapping.
  */
 export const EffectPanel: React.FC<Props> = ({ fx, onFxChange, bypass, onBypassChange }) => {
   const meta = EFFECT_META[fx.type];
   const isActive = fx.type !== 'none' && !bypass;
+
+  // Transient vibe announcement that overrides the static description for
+  // 1.5s after a chip tap (§9.15). aria-live="polite" announces it to
+  // screen readers exactly once.
+  const [vibeAnnounce, setVibeAnnounce] = useState<string | null>(null);
+  const announceTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (announceTimerRef.current !== null) window.clearTimeout(announceTimerRef.current);
+    };
+  }, []);
+
+  const handleVibeAnnounce = (message: string) => {
+    setVibeAnnounce(message);
+    if (announceTimerRef.current !== null) window.clearTimeout(announceTimerRef.current);
+    announceTimerRef.current = window.setTimeout(() => {
+      setVibeAnnounce(null);
+      announceTimerRef.current = null;
+    }, 1500);
+  };
 
   const handleTypeChange = (type: EffectType) => {
     onFxChange({ ...fx, type });
@@ -39,6 +66,8 @@ export const EffectPanel: React.FC<Props> = ({ fx, onFxChange, bypass, onBypassC
           {bypass ? 'BYPASS' : 'ON'}
         </button>
       </div>
+
+      <EffectVibeChips fx={fx} onFxChange={onFxChange} onVibeAnnounce={handleVibeAnnounce} />
 
       <div className="effect-type-row">
         {EFFECT_TYPES.map((t) => (
@@ -86,7 +115,9 @@ export const EffectPanel: React.FC<Props> = ({ fx, onFxChange, bypass, onBypassC
             </label>
           </div>
 
-          <div className="effect-description">{meta.description}</div>
+          <div className="effect-description" aria-live="polite">
+            {vibeAnnounce ?? meta.description}
+          </div>
         </>
       )}
     </div>
