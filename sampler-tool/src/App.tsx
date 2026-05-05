@@ -301,7 +301,7 @@ export default function App() {
             <section className="workspace-left">
               <h2 className="section-label">
                 <span className="dot"></span>
-                PADS · click or press key
+                PADS · クリック / キーで再生
               </h2>
               <PadGrid
                 samples={samples}
@@ -325,7 +325,7 @@ export default function App() {
               <section className="workspace-right">
                 <h2 className="section-label">
                   <span className="dot"></span>
-                  SAMPLE
+                  サンプル
                 </h2>
                 {samplePanel}
               </section>
