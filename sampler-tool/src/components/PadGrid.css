@@ -162,7 +162,7 @@
   line-height: 1;
   font-weight: 800;
   cursor: pointer;
-  display: none; /* shown only on mobile via media query below */
+  display: none; /* shown on touch devices via media query below */
   align-items: center;
   justify-content: center;
   box-shadow:
@@ -175,7 +175,7 @@
   transform: translateY(-1px);
 }
 
-@media (max-width: 767px) {
+@media (hover: none), (pointer: coarse) {
   .pad-add-btn {
     display: flex;
     width: 32px;
