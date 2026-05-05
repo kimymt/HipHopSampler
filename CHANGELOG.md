@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2.2] - 2026-05-05
+
+### Added
+- Unit tests for `presetDictionary` (12 contract assertions: chip count, type coverage, lookup correctness, case-insensitivity, no-duplicates).
+- Component tests for `EffectVibeChips` (17 tests: rendering, chip-tap with motion, prefers-reduced-motion path, manual interaction clears active state).
+- Manual test procedure for verifying `prefers-reduced-motion` on real iPad / iPhone / Android, archived in `.gstack/qa-reports/reduce-motion-manual-test.md`.
+
+Test count: 75 → 104 (+29).
+
 ## [0.1.2.1] - 2026-05-05
 
 ### Fixed
