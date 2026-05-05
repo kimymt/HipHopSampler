@@ -299,10 +299,10 @@ export default function App() {
         <main className="app-main">
           <div className="workspace">
             <section className="workspace-left">
-              <div className="section-label">
+              <h2 className="section-label">
                 <span className="dot"></span>
                 PADS · click or press key
-              </div>
+              </h2>
               <PadGrid
                 samples={samples}
                 onPadClick={handlePadClick}
@@ -323,10 +323,10 @@ export default function App() {
 
             {!isMobile && (
               <section className="workspace-right">
-                <div className="section-label">
+                <h2 className="section-label">
                   <span className="dot"></span>
                   SAMPLE
-                </div>
+                </h2>
                 {samplePanel}
               </section>
             )}

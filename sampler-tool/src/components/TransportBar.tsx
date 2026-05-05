@@ -27,7 +27,7 @@ export const TransportBar = ({
       <div className="transport-section logo-section">
         <div className="logo-mark">▣</div>
         <div className="logo-text">
-          <div className="logo-title">{isMobile ? 'HHS' : 'HIP HOP SAMPLER'}</div>
+          <h1 className="logo-title">{isMobile ? 'HHS' : 'HIP HOP SAMPLER'}</h1>
           {!isMobile && <div className="logo-sub">v0.1 · prototype</div>}
         </div>
       </div>

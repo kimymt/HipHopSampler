@@ -29,7 +29,7 @@ export const Sequencer = ({ pattern, onToggleStep, onClear, currentStep, selecte
     <div className={`sequencer ${isMobile ? 'mobile' : ''}`}>
       <div className="sequencer-header">
         <div className="sequencer-title">
-          <span className="seq-label">SEQUENCER</span>
+          <h2 className="seq-label">SEQUENCER</h2>
           <span className="seq-target">
             {selectedPadId
               ? `→ ${sampleName || `PAD ${padIdToDisplayString(selectedPadId)}`}`
