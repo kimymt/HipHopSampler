@@ -24,10 +24,11 @@
 }
 
 .effect-panel-label {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: var(--te-orange);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  margin: 0;
 }
 
 .effect-bypass-btn {

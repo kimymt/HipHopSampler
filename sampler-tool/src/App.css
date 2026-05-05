@@ -62,15 +62,16 @@
 
 .section-label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink-soft);
-  letter-spacing: 2.5px;
+  letter-spacing: 1.5px;
   display: flex;
   align-items: center;
   gap: 8px;
   padding-left: 4px;
   text-transform: uppercase;
+  margin: 0;
 }
 
 .section-label .dot {
@@ -102,8 +103,8 @@
   }
 
   .section-label {
-    font-size: 9px;
-    letter-spacing: 2px;
+    font-size: 12px;
+    letter-spacing: 1.2px;
   }
 
   /* The hint text comes right after the grid; tighten spacing */

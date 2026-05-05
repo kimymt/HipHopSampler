@@ -28,7 +28,7 @@ export const EffectPanel: React.FC<Props> = ({ fx, onFxChange, bypass, onBypassC
   return (
     <div className={`effect-panel ${isActive ? 'is-active' : ''}`}>
       <div className="effect-panel-header">
-        <h2 className="effect-panel-label">FX</h2>
+        <h2 className="effect-panel-label">エフェクト</h2>
         <button
           type="button"
           className={`effect-bypass-btn ${bypass ? 'is-bypassed' : ''}`}
