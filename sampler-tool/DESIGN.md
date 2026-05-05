@@ -402,6 +402,62 @@ inset 0 -1px 0 rgba(255, 255, 255, 0.4);
 ### 9.14 Pad "+" Button
 **役割:** モバイル空パッドにファイル選択導線 (iOS HTML5 D&D 不可対策)。
 
+### 9.15 EffectVibeChips
+
+**役割:** EffectPanel 上部に配置する「言葉でエフェクトを呼ぶ」ためのショートカット chip 列。ペルソナ §1 の "DAW で挫折した人が「これなら触れる」と思う安心感" を主目的にした、専門用語ナシで音色イメージから1タップでエフェクトを当てる経路。
+
+**配置:**
+- `EffectPanel` 内、`effect-type-row` (なし/リバーブ/ディレイ/フィルター/サチュレート/ローファイ) の **上**
+- 既存の type ボタン + WET/PARAM ノブはそのまま残し、chip 列は **上位の入口** として並列共存
+
+**仕様:**
+- chip サイズ: デスクトップ 40×60min / モバイル 38×60min (§12 タップターゲット 44×44 は内側 padding 込みで満たす)
+- レイアウト: `display:flex; gap:6px; overflow-x:auto;` 横スクロール、scrollbar 非表示、両端 fade-mask で「まだ続く」シグナル
+- 表示数: 人気 8〜12 件 (辞書 30 件のうち主要分のみ chip 化)
+- 角丸: 6px (§6 「ボタン・input・ステップ」相当)
+- 影: §6 凸 (raised) パターン、active 時は §6 オレンジグロー
+
+**ラベル排版 (§4 例外を含む):**
+- 通常 chip: **日本語 Sans 13px font-weight:700** (§4 「迷ったら mono」の例外。理由: 「水中」を `SUICHU` Mono uppercase で書くより日本語 Sans の方が判読性が圧倒的に高く、persona D の判読性 > 機械感一貫性)
+- 末尾「他の言葉」chip のみ: Mono 11px uppercase letter-spacing 1.5px (ハードウェアステンシル印字感を維持)
+
+**状態:**
+- idle → `--bone-light` ↔ `--bone` グラデ + `--ink-soft` テキスト
+- hover → `translateY(-1px)` + `--ink-muted` border (§7 motion 100ms)
+- active (選択) → `--te-orange-light` ↔ `--te-orange` グラデ + 白テキスト + `box-shadow: 0 0 12px rgba(240,74,31,0.4)`
+- press → §7 「物理的感」遵守 (`scale(0.96)` 60ms)
+
+**タップ時動作:**
+1. `presetDictionary` から `{type, wet, param}` を引き、`onFxChange` に流し込む
+2. `effect-type-row` のアクティブを該当 type に自動切替 (既存 UI 反映)
+3. WET/PARAM ノブ位置を **250ms ease-out** でアニメ移動 (§7 「即時感 60ms」への意図的例外: 「水中 = filter 70%・20% のことか」と視覚で記憶できる学習効果のため)
+4. `effect-description` (LCD) に「→ TYPE WET%·PARAM%」を 1.5s だけ `aria-live="polite"` で表示
+
+**「他の言葉」chip (Phase 2B 投入時のみ末尾に出現):**
+- タップで `vibe-input` (LCD 風 text input、`--display-bg` 地 + `--display-red` 文字 + caret) が下に展開
+- 入力 → WebLLM (Qwen 2.5 0.5B) で解釈 → 同じ `onFxChange` 経路で適用
+- Phase 2A 期間中はこの chip は **存在しない** (DOM にも出さない)
+
+**辞書ファイル:** `src/effects/presetDictionary.ts`
+- Phase 2A: 30 件、うち人気 8〜12 件を `chips` array に分離して export
+- 残り 18 件は Phase 2B で text input マッチング経由で初出
+- スキーマ: `{ keyword: string; type: EffectType; wet: number; param: number; description?: string }`
+
+**ペルソナ整合チェック:**
+- §1 「視覚情報・選択肢は最小限か?」→ chip 12 件で長尾を切り、Phase 2A では text input すら出さない
+- §1 「3クリック以内、または1機能1クリック」→ 1 タップで type+wet+param を同時設定
+- §1 「DAW 経験者を切り捨ててでも初心者の挫折ポイントを取り除く」→ Splice 風検索バー不在は意図的判断
+
+**意図的に置かないもの (RISK 採用):**
+- 検索バー / search input — blank-page anxiety を避けるため
+- chip ラベルの Mono uppercase — 日本語判読性を優先
+- 全辞書一覧表示 — 30件並べると persona D 混乱、12件に絞る
+
+**Out of scope (将来 Phase):**
+- WebLLM 経由の自由入力 → Phase 2B
+- BYO API key 入力欄 → Phase 2C、Settings 配下に隠す
+- マッチ失敗時候補提示 → Phase 2B 投入後に意味を持つ (Phase 2A は chip しか叩けない設計)
+
 ---
 
 ## 10. インタラクション原則
@@ -515,4 +571,4 @@ DESIGN.md は **現状実装と意図** を映す。新しい方向性 (例: ダ
 
 ---
 
-最終更新: 2026-05-04 / Phase 3 マージ後
+最終更新: 2026-05-05 / §9.15 EffectVibeChips 追加 (Phase 2A 設計)

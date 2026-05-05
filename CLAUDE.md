@@ -39,3 +39,13 @@ Key routing rules:
 - Ship/deploy/PR → invoke /ship or /land-and-deploy
 - Save progress → invoke /context-save
 - Resume context → invoke /context-restore
+
+## Design System
+
+Always read `sampler-tool/DESIGN.md` before making any visual or UI decisions.
+All persona criteria (DAW挫折者), color tokens, typography, spacing, motion timings,
+and component specs are defined there. Do not deviate without explicit user approval.
+
+When invoking `/qa`, `/design-review`, or `/review`, flag any code that does not
+match DESIGN.md (e.g. ハードコード hex、Mono以外の機械的ラベル、選択肢を増やす UI 追加).
+Persona conflicts (§1) override aesthetic consistency.
