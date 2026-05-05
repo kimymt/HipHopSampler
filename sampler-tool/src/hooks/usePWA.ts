@@ -15,13 +15,13 @@ export const usePWA = () => {
   const isStandalone =
     typeof window !== 'undefined' &&
     (window.matchMedia('(display-mode: standalone)').matches ||
-      // iOS Safari uses navigator.standalone
-      window.navigator.standalone === true);
+      // iOS Safari uses navigator.standalone (non-standard, missing from lib.dom.d.ts)
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
 
   const isIos =
     typeof window !== 'undefined' &&
     /iPad|iPhone|iPod/.test(window.navigator.userAgent) &&
-    !window.navigator.standalone;
+    !(window.navigator as Navigator & { standalone?: boolean }).standalone;
 
   // SW registration + update flow
   const {
