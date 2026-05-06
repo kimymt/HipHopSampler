@@ -22,6 +22,8 @@ import { usePWA } from './hooks/usePWA';
 import { useAudioEngine } from './hooks/useAudioEngine';
 import { usePersistedSamples } from './hooks/usePersistedSamples';
 import { useStarterPack } from './hooks/useStarterPack';
+import { useReferenceTrack } from './hooks/useReferenceTrack';
+import { ReferenceMode } from './components/ReferenceMode';
 import { useMicRecorder } from './hooks/useMicRecorder';
 import { useSequencer } from './hooks/useSequencer';
 import { usePersistedState } from './hooks/usePersistence';
@@ -69,6 +71,8 @@ export default function App() {
     loadSample,
     hasSampleAt: (padId) => !!getSample(padId)?.buffer,
   });
+  const referenceTrack = useReferenceTrack({ initAudioContext });
+  const [referenceModeOpen, setReferenceModeOpen] = useState(false);
   const storageInfo = useStorageQuota();
   const [selectedPadId, setSelectedPadId] = useState(null);
   const [patterns, setPatterns] = usePersistedState('patterns', {});
@@ -418,9 +422,22 @@ export default function App() {
         audioContext={audioContext}
         ai={{ state: ai.state, optIn: ai.optIn, loadElapsedSec: ai.loadElapsedSec }}
         onAiToggle={ai.setOptedIn}
+        onReferenceModeOpen={() => {
+          setSettingsOpen(false);
+          setReferenceModeOpen(true);
+        }}
       />
 
       <Tour open={tourOpen} onClose={handleTourClose} />
+
+      {referenceModeOpen && (
+        <ReferenceMode
+          state={referenceTrack.state}
+          onImport={referenceTrack.importFile}
+          onClear={referenceTrack.clear}
+          onClose={() => setReferenceModeOpen(false)}
+        />
+      )}
       <StartupLoader
         status={restoreState.status}
         progress={restoreState.progress}

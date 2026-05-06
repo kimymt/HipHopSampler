@@ -23,6 +23,7 @@ export const SettingsSheet = ({
   // (or test fixtures) keep working — the row only renders when ai is passed.
   ai = null,
   onAiToggle,
+  onReferenceModeOpen,
 }: {
   open: boolean;
   onClose: () => void;
@@ -35,6 +36,7 @@ export const SettingsSheet = ({
   audioContext?: AudioContext | null;
   ai?: { state: WebLLMState; optIn: boolean; loadElapsedSec: number } | null;
   onAiToggle?: (on: boolean) => void;
+  onReferenceModeOpen?: () => void;
 }) => {
   if (!open) return null;
   return (
@@ -105,6 +107,22 @@ export const SettingsSheet = ({
         </div>
 
         {ai && <AiSuggestionRow ai={ai} onAiToggle={onAiToggle} />}
+
+        {onReferenceModeOpen && (
+          <div className="settings-row">
+            <div className="settings-row-label">
+              <strong>📚 リファレンスモード</strong>
+              <span>好きな曲を読み込んで構造 (BPM・ビート位置) を解析・学習</span>
+            </div>
+            <button
+              type="button"
+              className="settings-action"
+              onClick={() => onReferenceModeOpen()}
+            >
+              開く
+            </button>
+          </div>
+        )}
 
         <SampleSourcesRow />
       </div>

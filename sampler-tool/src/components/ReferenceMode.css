@@ -1,0 +1,285 @@
+/* Reference Mode panel — Phase 1
+ *
+ * Full-screen overlay that takes over the workspace when active. The user
+ * is doing a learning task here, not making a beat — so we deliberately
+ * separate it from the normal pad UI rather than trying to share space.
+ */
+
+.reference-mode-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 18, 14, 0.92);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.reference-mode-panel {
+  background: linear-gradient(180deg, var(--bone-light), var(--bone));
+  border: 1px solid var(--bone-darker);
+  border-radius: 8px;
+  padding: 18px 18px 22px;
+  width: 100%;
+  max-width: 640px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 8px 28px rgba(0, 0, 0, 0.5);
+  font-family: var(--mono);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: auto;
+}
+
+/* Header: orange "REFERENCE MODE" tag is permanent reminder of the special
+ * mode. The X close button is small but always reachable. */
+.reference-mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reference-mode-mark {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  color: #fff;
+  border: 1px solid var(--te-orange-dark);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.5),
+    0 1px 3px rgba(150, 40, 10, 0.3);
+}
+
+.reference-mode-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: var(--bone);
+  border: 1px solid var(--bone-darker);
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.reference-mode-close:hover {
+  border-color: var(--te-orange);
+  color: var(--te-orange);
+}
+
+/* Disclaimer banner — the legal-defense affordance. Always visible. */
+.reference-mode-disclaimer {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: rgba(94, 224, 107, 0.12);
+  border: 1px solid rgba(94, 224, 107, 0.4);
+  color: var(--ink-soft);
+}
+
+.reference-mode-title {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin: 0;
+  word-break: break-all;
+}
+
+/* Empty state — initial CTA */
+.reference-mode-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+  padding: 20px 8px;
+}
+
+.reference-mode-empty p {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.reference-mode-empty-detail {
+  font-size: 11px !important;
+  color: var(--ink-muted) !important;
+}
+
+.reference-mode-pick-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  border: 1px solid var(--te-orange-dark);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.5),
+    0 1px 3px rgba(150, 40, 10, 0.4);
+  transition: transform 0.06s ease;
+  min-height: 44px;
+  margin-top: 8px;
+}
+
+.reference-mode-pick-btn:hover {
+  transform: translateY(-1px);
+}
+
+.reference-mode-pick-btn:active {
+  transform: scale(0.97);
+}
+
+/* Importing state */
+.reference-mode-importing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--ink-muted);
+}
+
+.reference-mode-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--bone-darker);
+  border-top-color: var(--te-orange);
+  border-radius: 50%;
+  animation: reference-mode-spin 0.8s linear infinite;
+}
+
+@keyframes reference-mode-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error state */
+.reference-mode-error {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  border-radius: 4px;
+  background: rgba(255, 51, 34, 0.08);
+  border: 1px solid rgba(255, 51, 34, 0.3);
+}
+
+.reference-mode-error strong {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--display-red);
+}
+
+.reference-mode-error p {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Ready state */
+.reference-mode-ready {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reference-mode-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+
+.reference-mode-meta > div {
+  background: var(--bone);
+  border: 1px solid var(--bone-darker);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.reference-mode-meta dt {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--ink-muted);
+  margin-bottom: 2px;
+}
+
+.reference-mode-meta dd {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+  font-weight: 700;
+}
+
+.reference-mode-meta-ok {
+  color: #2c7d39 !important;
+}
+
+.reference-mode-next {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin: 0;
+  padding: 10px;
+  background: var(--bone);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.reference-mode-next em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.reference-mode-clear-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  background: var(--bone);
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-muted);
+  cursor: pointer;
+  align-self: flex-end;
+  min-height: 32px;
+}
+
+.reference-mode-clear-btn:hover {
+  border-color: var(--te-orange);
+  color: var(--te-orange);
+}
+
+@media (max-width: 480px) {
+  .reference-mode-meta {
+    grid-template-columns: 1fr;
+  }
+  .reference-mode-panel {
+    padding: 14px 14px 18px;
+  }
+}

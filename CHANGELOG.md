@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0.0] - 2026-05-06
+
+### Added
+- **📚 リファレンスモード — Phase 1**: load any audio file you like (MP3 / WAV / OGG / M4A / FLAC up to 100MB) and the app shows you its duration / sample rate / channels. Phase 2 (next sub-PR) will overlay the BPM and beat positions onto a waveform so beginners can see the structure of a track they want to learn from.
+- Strict copyright guardrails baked into the import path (per dev brief §2):
+  - **100% local** — file bytes never leave the browser. No upload, no fetch.
+  - **No persistence** — the AudioBuffer lives only in React state. Closing the panel drops the reference for GC. There is no save path, by design.
+  - **No DRM bypass** — DRM-protected files (and corrupt / unsupported codecs) are rejected with a clear "別のファイルでお試しください" message instead of attempting any workaround.
+- Settings now exposes a "📚 リファレンスモード" entry that opens the panel. The panel header carries a permanent orange "REFERENCE MODE" tag plus a green disclaimer "学習用：解析データは端末内でのみ処理され、サーバーへ送信・保存されません" so the legal-defense affordance is visible at every step.
+
+### Why this matters
+Dogfooding feedback (2026-05-06): "操作自体は可能だが曲を完成させるまでには程遠い。具体的にこういうビートを作りたいという目的に対して、こういう手順でやるんだよというガイドが欲しい". Reference Mode is the answer: instead of a built-in demo beat, users load a track they already love and the app explains its structure. Phase 2 will surface BPM + beat positions; Phase 3 will let the user adjust the grid and save just the *numbers* (no audio) so the analysis becomes a re-usable template.
+
 ## [0.4.0.0] - 2026-05-06
 
 ### Added
