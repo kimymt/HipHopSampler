@@ -40,30 +40,40 @@ export const useWebLLM = () => {
 
   const [optIn, setOptIn] = useState<boolean>(() => getStoredOptIn());
 
-  // Auto-load on mount if already opted in and supported. We don't gate on
-  // cache here — the library is fast for cached models.
+  // Auto-load on mount if already opted in and supported.
+  //
+  // CRITICAL: deps must NOT include `state.status`. The first `setState({loading})`
+  // call from inside startLoad triggers a re-render → useEffect cleanup runs →
+  // `cancelled` becomes true → every subsequent progress callback AND the final
+  // `setState({status:'ready'})` is skipped, leaving the UI pinned at "0%". The
+  // user-reported reload bug from v0.2.0.3 was exactly this: cached path loads
+  // fast but the ready transition never reaches the UI because cancellation
+  // races the state propagation.
+  //
+  // We gate by detectWebLLMSupport inside the effect so unsupported browsers
+  // don't trigger the load. The dictionary fallback in inferPreset still works
+  // either way.
   useEffect(() => {
-    if (state.status !== 'idle') return;
     if (!optIn) return;
+    const support = detectWebLLMSupport();
+    if (!support.supported) return;
 
     let cancelled = false;
     const startLoad = async () => {
-      const cached = await isWebLLMCached();
-      // Show the loading UI even on cached path; the engine still has to
-      // boot WebGPU + compile shaders (~5-10s on first session).
-      if (!cancelled) {
+      try {
+        const cached = await isWebLLMCached();
+        if (cancelled) return;
         setState({
           status: 'loading',
           progress: 0,
           text: cached ? 'モデルを準備中…' : '初回ダウンロード中… (約 300MB)',
         });
-      }
-      try {
         await loadWebLLM((progress, text) => {
           if (cancelled) return;
           setState({ status: 'loading', progress, text });
         });
-        if (!cancelled) setState({ status: 'ready' });
+        if (cancelled) return;
+        setState({ status: 'ready' });
       } catch (err) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : String(err);
@@ -75,7 +85,7 @@ export const useWebLLM = () => {
     return () => {
       cancelled = true;
     };
-  }, [optIn, state.status]);
+  }, [optIn]);
 
   /** User toggle handler. Persists opt-in and (if turning on) kicks off load. */
   const setOptedIn = useCallback((on: boolean) => {
