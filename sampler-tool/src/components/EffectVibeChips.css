@@ -96,14 +96,41 @@
     0 0 12px rgba(240, 74, 31, 0.4);
 }
 
-/* §9.15: 「もっと」chip uses Mono 11px uppercase letter-spacing 1.5px to keep
- * the hardware-stencil print feel. Differentiates it from the kana chips so
- * users notice it as a separate kind of input ("type your own"). */
+/* §9.15: 「他の言葉」chip is a doorway to the LCD-style vibe input below.
+ * Uses display-bg (black) + display-red (LCD red) so the chip looks like
+ * a small piece of the LCD itself — visually telegraphs "tapping me opens
+ * a text field, not a preset". Mono 11px uppercase letter-spacing 1.5px
+ * keeps the hardware-stencil print feel from the original spec. */
 .effect-vibe-chip-more {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
+  background: var(--display-bg);
+  border-color: var(--display-frame, #2a241d);
+  color: var(--display-red);
+  text-shadow: 0 0 4px rgba(255, 51, 34, 0.4);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(60, 50, 30, 0.2);
+}
+
+.effect-vibe-chip-more:hover {
+  background: var(--display-bg-soft, #24201b);
+  border-color: var(--display-red);
+  color: var(--display-red);
+  text-shadow: 0 0 6px rgba(255, 51, 34, 0.6);
+}
+
+/* When the LCD input is open, the chip glows like an active LCD readout. */
+.effect-vibe-chip-more.is-active {
+  background: var(--display-bg);
+  border-color: var(--display-red);
+  color: var(--display-red);
+  text-shadow: 0 0 8px rgba(255, 51, 34, 0.8);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.7),
+    0 0 12px rgba(255, 51, 34, 0.5);
 }
 
 /* ── Phase 2B.2: LCD-style vibe input panel ───────────────────────── */

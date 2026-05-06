@@ -214,9 +214,9 @@ export const EffectVibeChips: React.FC<Props> = ({
             aria-pressed={vibeInputOpen}
             aria-expanded={vibeInputOpen}
             aria-controls="vibe-input-panel"
-            aria-label="もっと — 自由な言葉でエフェクトを呼び出す"
+            aria-label="他の言葉 — 自由な言葉でエフェクトを呼び出す"
           >
-            もっと
+            他の言葉
           </button>
         )}
       </div>

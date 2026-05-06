@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2.0] - 2026-05-06
+
+### Changed
+- **Renamed the free-form vibe chip from "もっと" back to "他の言葉"** (DESIGN.md §9.15 spec). The previous "もっと" rename was made for tighter horizontal scroll fit, but the original "他の言葉" framing is more accurate ("type something else") and reads better next to the kana presets.
+- **Restyled the 他の言葉 chip with the LCD palette** (display-bg + display-red + Mono uppercase + a soft red glow). The chip now visually telegraphs "this is a doorway to the LCD input below" instead of looking like just another preset chip. Idle state is muted; hover and active states crank up the red glow to match the LCD readout aesthetic from the BPM display and bypass button.
+
+### Added
+- **Visible AI 提案 download progress.** The Settings row now renders a thin red-glowing progress bar that fills as WebLLM downloads weight shards. While the library's own progress callback is silent (initial manifest + tokenizer fetch typically sits at 0% for 5-15s on slower connections), the bar runs an indeterminate left-to-right shimmer so the user has visible motion. As soon as a real progress number arrives, the bar switches to a determinate fill.
+- **Elapsed seconds counter** during download ("初回ダウンロード中… 0% · 12秒経過"). Even if the percentage stalls, the counter ticks every second so the user knows the load is still alive.
+- `prefers-reduced-motion`: indeterminate shimmer is replaced with a static 35%-filled bar; the elapsed counter still ticks for non-visual feedback.
+
 ## [0.3.1.1] - 2026-05-06
 
 ### Fixed
