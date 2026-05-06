@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0.3] - 2026-05-05
+
+### Fixed
+- WebLLM weight downloads were still blocked after v0.2.0.1: HuggingFace redirects model weight shards to its Xet CDN (`cas-bridge.xethub.hf.co`), which the CSP did not whitelist. Added `https://*.hf.co` to `connect-src` so the redirected GET requests succeed and the 300MB download completes.
+
 ## [0.2.0.2] - 2026-05-05
 
 ### Fixed
