@@ -68,10 +68,63 @@
   letter-spacing: 1.5px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding-left: 4px;
   text-transform: uppercase;
   margin: 0;
+}
+
+.section-label-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Starter kit button: a small primary-ish callout on the right of the PADS
+ * label. Loud enough to invite a tap on first launch, but not screaming
+ * (this is a one-time-needed action; once the user has a kit it disappears). */
+.starter-kit-btn {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  border: 1px solid var(--te-orange-dark);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.5),
+    0 1px 3px rgba(150, 40, 10, 0.4);
+  text-transform: none;
+  transition: transform 0.06s ease, opacity 0.1s ease;
+  white-space: nowrap;
+}
+
+.starter-kit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.starter-kit-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.starter-kit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .starter-kit-btn {
+    padding: 8px 12px;
+    font-size: 10px;
+    min-height: 36px;
+  }
 }
 
 .section-label .dot {

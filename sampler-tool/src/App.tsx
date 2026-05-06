@@ -21,6 +21,7 @@ import { usePersistentStorage } from './hooks/usePersistentStorage';
 import { usePWA } from './hooks/usePWA';
 import { useAudioEngine } from './hooks/useAudioEngine';
 import { usePersistedSamples } from './hooks/usePersistedSamples';
+import { useStarterPack } from './hooks/useStarterPack';
 import { useMicRecorder } from './hooks/useMicRecorder';
 import { useSequencer } from './hooks/useSequencer';
 import { usePersistedState } from './hooks/usePersistence';
@@ -63,6 +64,11 @@ export default function App() {
     setSample,
     removeSample,
   } = usePersistedSamples(initAudioContext);
+  const starterPack = useStarterPack({
+    initAudioContext,
+    loadSample,
+    hasSampleAt: (padId) => !!getSample(padId)?.buffer,
+  });
   const storageInfo = useStorageQuota();
   const [selectedPadId, setSelectedPadId] = useState(null);
   const [patterns, setPatterns] = usePersistedState('patterns', {});
@@ -311,8 +317,30 @@ export default function App() {
           <div className="workspace">
             <section className="workspace-left">
               <h2 className="section-label">
-                <span className="dot"></span>
-                {isMobile ? 'PADS · タップで再生 / 長押しで編集' : 'PADS · クリック / キーで再生'}
+                <span className="section-label-text">
+                  <span className="dot"></span>
+                  {isMobile ? 'PADS · タップで再生 / 長押しで編集' : 'PADS · クリック / キーで再生'}
+                </span>
+                {(() => {
+                  // Show the starter-kit button only when at least one of
+                  // the first 8 pads is still empty. Avoids clutter once
+                  // the user has loaded their own kit.
+                  const STARTER_PADS = ['0-0','0-1','0-2','0-3','1-0','1-1','1-2','1-3'];
+                  const someEmpty = STARTER_PADS.some((id) => !getSample(id)?.buffer);
+                  if (!someEmpty) return null;
+                  return (
+                    <button
+                      type="button"
+                      className="starter-kit-btn"
+                      onClick={() => starterPack.loadStarterPack()}
+                      disabled={starterPack.loading}
+                      title="ヒップホップの基本ドラム 8 音をパッド 1-8 にロード"
+                      aria-label="スタータキットをロード"
+                    >
+                      {starterPack.loading ? '読み込み中…' : '🎁 スタータキット'}
+                    </button>
+                  );
+                })()}
               </h2>
               <PadGrid
                 samples={samples}

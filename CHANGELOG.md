@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0.0] - 2026-05-06
+
+### Added
+- **🎁 スタータキット**: brand-new users no longer face an empty 4×4 grid. A button next to the PADS section header loads 8 synthesized hip-hop drum samples (kick / snare / closed hat / open hat / clap / 808 / rim / perc) into the first two rows in ~300ms. Generated client-side via Web Audio `OfflineAudioContext` (zero license risk, ~2KB code, no bundle bloat). The button hides automatically once all 8 starter pads are filled. Skips pads that already have a sample so user uploads are never clobbered.
+- **🎵 サンプル音源を探す** in Settings: curated directory of 6 legally-usable sample sites (魔王魂, 効果音ラボ, D-elf, Pixabay, Freesound CC0 filter, r-loops Free) with license notes inline so users don't have to read each site's fine print to know what's safe.
+- New utilities: `src/utils/synthDrums.ts` (8 drum-synth recipes), `src/utils/wavEncode.ts` (AudioBuffer → WAV Blob), `src/hooks/useStarterPack.ts` (orchestrates synthesis → loadSample pipeline).
+
+### Why this matters
+The persona reported "サンプル音源を探すのがすでに大変" — getting hip-hop-flavored audio is the largest barrier to making a first beat. The starter kit unblocks playback in zero seconds; the curated source list provides a path to richer / more authentic sounds for the second beat. Synth drums sound clean by default, which means the lofi/saturation/reverb chips have maximum visible impact when applied — テープ on a synth kick = instant boom-bap.
+
 ## [0.3.2.0] - 2026-05-06
 
 ### Changed
