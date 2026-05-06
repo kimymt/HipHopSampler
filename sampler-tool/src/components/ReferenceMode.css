@@ -481,3 +481,210 @@
     justify-content: flex-start;
   }
 }
+
+/* Phase 3 B+C: action row, saved list, saved-entry view */
+
+.reference-mode-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.reference-mode-action-primary {
+  flex: 1 1 auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  border: 1px solid var(--te-orange-dark);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.5),
+    0 1px 3px rgba(150, 40, 10, 0.4);
+  min-height: 44px;
+  transition: transform 0.06s ease, filter 0.1s ease;
+  min-width: 0;
+}
+
+.reference-mode-action-primary:hover {
+  filter: brightness(1.05);
+}
+
+.reference-mode-action-primary:active {
+  transform: scale(0.97);
+}
+
+.reference-mode-action-secondary {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--bone);
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-soft);
+  min-height: 40px;
+}
+
+.reference-mode-action-secondary:hover {
+  border-color: var(--te-orange);
+  color: var(--te-orange);
+}
+
+/* Saved analyses list (idle state) */
+
+.saved-analyses-list {
+  border-top: 1px solid var(--bone-darker);
+  border-bottom: 1px solid var(--bone-darker);
+  padding: 10px 0 12px;
+  margin: -4px 0 4px;
+}
+
+.saved-analyses-heading {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--ink-muted);
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.saved-analyses-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.saved-analyses-list li {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.saved-analyses-item {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: var(--bone);
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 13px;
+  text-align: left;
+  min-height: 44px;
+  transition: border-color 0.1s ease, transform 0.06s ease;
+}
+
+.saved-analyses-item:hover {
+  border-color: var(--te-orange);
+}
+
+.saved-analyses-item:active {
+  transform: scale(0.99);
+}
+
+.saved-analyses-name {
+  font-weight: 700;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.saved-analyses-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--display-red);
+  flex-shrink: 0;
+}
+
+.saved-analyses-delete {
+  flex: 0 0 auto;
+  width: 36px;
+  border-radius: 4px;
+  background: var(--bone);
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-muted);
+  font-size: 16px;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.saved-analyses-delete:hover {
+  border-color: var(--display-red);
+  color: var(--display-red);
+}
+
+/* Saved-entry detail view */
+
+.saved-analyses-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.saved-analyses-view-header {
+  display: flex;
+  align-items: center;
+}
+
+.saved-analyses-back {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  background: var(--bone);
+  border: 1px solid var(--bone-darker);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.saved-analyses-back:hover {
+  border-color: var(--te-orange);
+  color: var(--te-orange);
+}
+
+.saved-analyses-view-title {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.saved-analyses-view-disclaimer {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: rgba(94, 224, 107, 0.10);
+  border: 1px solid rgba(94, 224, 107, 0.4);
+  color: var(--ink-soft);
+}
+
+.saved-analyses-view-delete:hover {
+  border-color: var(--display-red) !important;
+  color: var(--display-red) !important;
+}

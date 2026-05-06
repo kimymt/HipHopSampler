@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReferenceState } from '../hooks/useReferenceTrack';
 import { ReferenceWaveform } from './ReferenceWaveform';
 import { buildBeatGrid, estimateBpm } from '../utils/bpmEstimate';
+import { useSavedAnalyses } from '../hooks/useSavedAnalyses';
+import { SaveAnalysisDialog } from './SaveAnalysisDialog';
+import type { SavedAnalysis } from '../utils/referenceStore';
 import './ReferenceMode.css';
 
 interface Props {
@@ -9,6 +12,13 @@ interface Props {
   onImport: (file: File) => void;
   onClear: () => void;
   onClose: () => void;
+  /**
+   * Phase 3 B+C: applies the (user-adjusted) reference BPM to the main app
+   * transport. The transport bar's BPM input + delay tempo-sync follow.
+   * Without this, saved analyses would be a "notebook with no use" — see
+   * the Phase 3 design doc for why this is non-optional.
+   */
+  onApplyBpm?: (bpm: number) => void;
 }
 
 /**
@@ -24,13 +34,23 @@ interface Props {
  *   - Phase 2 will mount the waveform display + beat overlay below the
  *     status block; the panel is sized to leave room.
  */
-export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClose }) => {
+export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClose, onApplyBpm }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Phase 3a: user-adjustable BPM + grid offset. Initialized from analyzer
   // output, then editable. Reset when a new track is loaded.
   const [userBpm, setUserBpm] = useState<number | null>(null);
   const [userOffsetSec, setUserOffsetSec] = useState(0);
+
+  // Phase 3 B+C: saved analyses + save dialog visibility + selected saved
+  // entry (when user is viewing a saved entry from idle state).
+  const saved = useSavedAnalyses();
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [viewingSavedId, setViewingSavedId] = useState<string | null>(null);
+  const viewingSaved = useMemo<SavedAnalysis | null>(
+    () => saved.analyses.find((a) => a.id === viewingSavedId) ?? null,
+    [saved.analyses, viewingSavedId],
+  );
   // Track the file currently in `ready` state so we know when to reset.
   const readyKey = state.status === 'ready' ? state.track.fileName + state.track.durationSec : null;
   useEffect(() => {
@@ -87,6 +107,25 @@ export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClo
     setUserOffsetSec(0);
   };
 
+  const handleSaveConfirm = async (name: string) => {
+    if (state.status !== 'ready') return;
+    const effectiveBpm = userBpm ?? state.analysis.bpm.bpm;
+    const grid = buildBeatGrid(effectiveBpm, state.track.durationSec, userOffsetSec);
+    try {
+      await saved.add({
+        name,
+        bpm: effectiveBpm,
+        offsetSec: userOffsetSec,
+        beatPositions: grid,
+        durationSec: state.track.durationSec,
+      });
+    } catch (err) {
+      console.warn('[reference-mode] save failed', err);
+    } finally {
+      setSaveDialogOpen(false);
+    }
+  };
+
   return (
     <div className="reference-mode-root" role="dialog" aria-modal="true" aria-labelledby="reference-mode-title">
       <div className="reference-mode-panel" onClick={(e) => e.stopPropagation()}>
@@ -112,32 +151,53 @@ export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClo
             : '楽曲ファイルを選んで構造を解析'}
         </h2>
 
-        {state.status === 'idle' && (
-          <div className="reference-mode-empty">
-            <p>
-              既存の楽曲を読み込むと、BPM とビート位置を自動抽出して
-              「どこで何を叩くか」のお手本になります。
-            </p>
-            <p className="reference-mode-empty-detail">
-              MP3 / WAV / OGG / M4A / FLAC に対応・100MB まで・著作権保護
-              (DRM) のあるファイルは解析できません
-            </p>
-            <button
-              type="button"
-              className="reference-mode-pick-btn"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              ファイルを選ぶ
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.webm,.opus"
-              onChange={handleFileChange}
-              hidden
-              aria-hidden="true"
-            />
-          </div>
+        {state.status === 'idle' && !viewingSaved && (
+          <>
+            {saved.analyses.length > 0 && (
+              <SavedAnalysesList
+                analyses={saved.analyses}
+                onSelect={setViewingSavedId}
+                onDelete={(id) => saved.remove(id)}
+              />
+            )}
+            <div className="reference-mode-empty">
+              <p>
+                既存の楽曲を読み込むと、BPM とビート位置を自動抽出して
+                「どこで何を叩くか」のお手本になります。
+              </p>
+              <p className="reference-mode-empty-detail">
+                MP3 / WAV / OGG / M4A / FLAC に対応・100MB まで・著作権保護
+                (DRM) のあるファイルは解析できません
+              </p>
+              <button
+                type="button"
+                className="reference-mode-pick-btn"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                ファイルを選ぶ
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.webm,.opus"
+                onChange={handleFileChange}
+                hidden
+                aria-hidden="true"
+              />
+            </div>
+          </>
+        )}
+
+        {state.status === 'idle' && viewingSaved && (
+          <SavedAnalysisView
+            entry={viewingSaved}
+            onApplyBpm={onApplyBpm}
+            onBack={() => setViewingSavedId(null)}
+            onDelete={async () => {
+              await saved.remove(viewingSaved.id);
+              setViewingSavedId(null);
+            }}
+          />
         )}
 
         {state.status === 'importing' && (
@@ -188,8 +248,16 @@ export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClo
             onOffsetDrag={(d) => setUserOffsetSec((prev) => prev + d)}
             onOffsetReset={() => setUserOffsetSec(0)}
             onClear={onClear}
+            onSave={() => setSaveDialogOpen(true)}
+            onApplyBpm={onApplyBpm}
           />
         )}
+
+        <SaveAnalysisDialog
+          open={saveDialogOpen}
+          onConfirm={handleSaveConfirm}
+          onCancel={() => setSaveDialogOpen(false)}
+        />
       </div>
     </div>
   );
@@ -217,6 +285,10 @@ type ReadyViewProps = {
   onOffsetDrag: (deltaSec: number) => void;
   onOffsetReset: () => void;
   onClear: () => void;
+  /** Phase 3 B+C: open the save dialog (parent handles confirm). */
+  onSave: () => void;
+  /** Phase 3 B+C: apply current effective BPM to the main app transport. */
+  onApplyBpm?: (bpm: number) => void;
 };
 
 const ReadyView: React.FC<ReadyViewProps> = ({
@@ -230,6 +302,8 @@ const ReadyView: React.FC<ReadyViewProps> = ({
   onOffsetDrag,
   onOffsetReset,
   onClear,
+  onSave,
+  onApplyBpm,
 }) => {
   const effectiveBpm = userBpm ?? state.analysis.bpm.bpm;
   const adjustedGrid = useMemo(
@@ -320,12 +394,128 @@ const ReadyView: React.FC<ReadyViewProps> = ({
         </p>
       )}
 
-      <p className="reference-mode-next">
-        <em>次のステップ:</em> 派生データの軽量保存 (Phase 3b で実装予定)
-      </p>
-      <button type="button" className="reference-mode-clear-btn" onClick={onClear}>
-        解除
-      </button>
+      <div className="reference-mode-actions">
+        {onApplyBpm && effectiveBpm > 0 && (
+          <button
+            type="button"
+            className="reference-mode-action-primary"
+            onClick={() => onApplyBpm(effectiveBpm)}
+            title="アプリ全体の BPM をこの値に設定します"
+          >
+            🎯 このテンポをアプリに適用 ({effectiveBpm} BPM)
+          </button>
+        )}
+        <button type="button" className="reference-mode-action-secondary" onClick={onSave}>
+          💾 解析を保存
+        </button>
+        <button type="button" className="reference-mode-clear-btn" onClick={onClear}>
+          解除
+        </button>
+      </div>
     </div>
   );
 };
+
+/* ─── Saved analyses list (idle state, when entries exist) ───────── */
+
+const SavedAnalysesList: React.FC<{
+  analyses: readonly SavedAnalysis[];
+  onSelect: (id: string) => void;
+  onDelete: (id: string) => void;
+}> = ({ analyses, onSelect, onDelete }) => (
+  <div className="saved-analyses-list">
+    <h3 className="saved-analyses-heading">保存済みの解析</h3>
+    <ul>
+      {analyses.map((a) => (
+        <li key={a.id}>
+          <button
+            type="button"
+            className="saved-analyses-item"
+            onClick={() => onSelect(a.id)}
+            aria-label={`${a.name} を開く`}
+          >
+            <span className="saved-analyses-name">{a.name}</span>
+            <span className="saved-analyses-meta">
+              {a.bpm} BPM · {Math.round(a.durationSec)}s
+            </span>
+          </button>
+          <button
+            type="button"
+            className="saved-analyses-delete"
+            onClick={() => {
+              if (window.confirm(`「${a.name}」を削除しますか？`)) onDelete(a.id);
+            }}
+            aria-label={`${a.name} を削除`}
+            title="削除"
+          >
+            ×
+          </button>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+/* ─── Saved-entry detail view (no audio, just numbers + apply CTA) ─ */
+
+const SavedAnalysisView: React.FC<{
+  entry: SavedAnalysis;
+  onApplyBpm?: (bpm: number) => void;
+  onBack: () => void;
+  onDelete: () => void;
+}> = ({ entry, onApplyBpm, onBack, onDelete }) => (
+  <div className="saved-analyses-view">
+    <div className="saved-analyses-view-header">
+      <button type="button" className="saved-analyses-back" onClick={onBack}>
+        ← 一覧に戻る
+      </button>
+    </div>
+
+    <h3 className="saved-analyses-view-title">{entry.name}</h3>
+
+    <div className="saved-analyses-view-disclaimer" role="note">
+      この保存データには <strong>BPM とビート位置の数値のみ</strong> が含まれます。
+      元の楽曲ファイルは含まれていないため、波形は表示されません。
+    </div>
+
+    <dl className="reference-mode-meta">
+      <div>
+        <dt>BPM</dt>
+        <dd className="reference-mode-meta-bpm">{entry.bpm}</dd>
+      </div>
+      <div>
+        <dt>長さ</dt>
+        <dd>{formatDuration(entry.durationSec)}</dd>
+      </div>
+      <div>
+        <dt>オフセット</dt>
+        <dd>{entry.offsetSec >= 0 ? '+' : ''}{entry.offsetSec.toFixed(2)}s</dd>
+      </div>
+      <div>
+        <dt>ビート位置数</dt>
+        <dd>{entry.beatPositions.length}</dd>
+      </div>
+    </dl>
+
+    <div className="reference-mode-actions">
+      {onApplyBpm && (
+        <button
+          type="button"
+          className="reference-mode-action-primary"
+          onClick={() => onApplyBpm(entry.bpm)}
+        >
+          🎯 このテンポをアプリに適用 ({entry.bpm} BPM)
+        </button>
+      )}
+      <button
+        type="button"
+        className="reference-mode-action-secondary saved-analyses-view-delete"
+        onClick={() => {
+          if (window.confirm(`「${entry.name}」を削除しますか？`)) onDelete();
+        }}
+      >
+        この解析を削除
+      </button>
+    </div>
+  </div>
+);

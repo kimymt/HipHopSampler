@@ -436,6 +436,12 @@ export default function App() {
           onImport={referenceTrack.importFile}
           onClear={referenceTrack.clear}
           onClose={() => setReferenceModeOpen(false)}
+          onApplyBpm={(newBpm) => {
+            // Phase 3 B+C: apply analyzed BPM to the main app transport.
+            // setBpm is the same persisted state used by the BPM stepper,
+            // delay tempo-sync, and sequencer scheduler — they all follow.
+            setBpm(newBpm);
+          }}
         />
       )}
       <StartupLoader
