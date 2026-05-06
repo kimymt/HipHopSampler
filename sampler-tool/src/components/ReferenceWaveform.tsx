@@ -7,6 +7,13 @@ interface Props {
   beatGrid: readonly number[];
   /** Display height in CSS pixels. */
   height?: number;
+  /**
+   * Phase 3a: when set, dragging horizontally on the waveform fires this
+   * with the delta in seconds (positive → grid moved right, i.e. user is
+   * shifting the perceived downbeat later in the track). Parent owns the
+   * offset state and re-passes the recomputed beatGrid each render.
+   */
+  onOffsetDrag?: (deltaSec: number) => void;
 }
 
 /**
@@ -35,9 +42,13 @@ export const ReferenceWaveform: React.FC<Props> = ({
   onsets,
   beatGrid,
   height = 120,
+  onOffsetDrag,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Drag state tracked in refs (no re-render needed during drag — parent
+  // re-renders on each emitted delta).
+  const dragRef = useRef<{ startX: number; startSec: number; lastDelta: number } | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -135,9 +146,50 @@ export const ReferenceWaveform: React.FC<Props> = ({
     return () => ro.disconnect();
   }, [buffer, onsets, beatGrid, height]);
 
+  // Convert pointer-x delta in CSS pixels to seconds based on current
+  // canvas width and buffer duration.
+  const pixelsPerSec = (() => {
+    const w = containerRef.current?.clientWidth ?? 1;
+    return w / buffer.duration;
+  });
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!onOffsetDrag) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { startX: e.clientX, startSec: 0, lastDelta: 0 };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!dragRef.current || !onOffsetDrag) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dSec = dx / pixelsPerSec();
+    // Emit incremental delta (current move minus last fire) so the parent
+    // can simply add to its accumulated offset.
+    const incremental = dSec - dragRef.current.lastDelta;
+    dragRef.current.lastDelta = dSec;
+    if (Math.abs(incremental) > 0.0001) {
+      onOffsetDrag(incremental);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!dragRef.current) return;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    dragRef.current = null;
+  };
+
   return (
     <div ref={containerRef} className="reference-waveform">
-      <canvas ref={canvasRef} aria-label="楽曲の波形とビート位置" role="img" />
+      <canvas
+        ref={canvasRef}
+        aria-label="楽曲の波形とビート位置"
+        role="img"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        style={onOffsetDrag ? { cursor: 'grab', touchAction: 'none' } : undefined}
+      />
       <div className="reference-waveform-legend">
         <span className="legend-item legend-grid">
           <span className="legend-swatch legend-swatch-grid" /> ビートグリッド (4 拍子目強調)

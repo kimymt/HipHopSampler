@@ -126,17 +126,35 @@ export const estimateBpm = (onsets: readonly number[]): BpmEstimate => {
 };
 
 /**
- * Generate a beat grid given a BPM and the desired duration. Returns beat
- * positions in seconds, anchored to time 0. Phase 3 will add interactive
- * adjustment so users can shift the grid to match the actual downbeat;
- * Phase 2 just lays the grid down at t=0 as a starting point.
+ * Generate a beat grid given a BPM, duration, and starting offset.
+ *
+ * Phase 2 anchored the grid at t=0. Phase 3a adds the offset parameter so
+ * the user can drag the grid to match the actual downbeat (most tracks
+ * start with an intro and the first real beat lands somewhere > 0).
+ *
+ * Negative offsets are allowed and clamped: only beats >= 0 and < duration
+ * are emitted, so the grid still fills the whole waveform regardless of
+ * where the user dragged it.
  */
-export const buildBeatGrid = (bpm: number, durationSec: number): number[] => {
+export const buildBeatGrid = (
+  bpm: number,
+  durationSec: number,
+  offsetSec = 0,
+): number[] => {
   if (bpm <= 0 || durationSec <= 0) return [];
   const beatInterval = 60 / bpm;
   const grid: number[] = [];
-  for (let t = 0; t < durationSec; t += beatInterval) {
-    grid.push(t);
+  // Walk backwards from offset to populate any beats before the offset that
+  // still fall in [0, durationSec). Then walk forwards from offset.
+  let t = offsetSec;
+  while (t >= 0) {
+    if (t < durationSec) grid.unshift(t);
+    t -= beatInterval;
+  }
+  t = offsetSec + beatInterval;
+  while (t < durationSec) {
+    if (t >= 0) grid.push(t);
+    t += beatInterval;
   }
   return grid;
 };
