@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0.1] - 2026-05-06
+
+### Fixed
+- WebLLM inference would hang indefinitely on the first vibe submission ("AIが解釈中…" stuck for 60s+). Root cause: passing `response_format: { type: 'json_object' }` to WebLLM 0.2.83 triggers a grammar compiler crash (`Cannot pass non-string to std::string` in `CompileJSONSchema`) when no explicit stringified schema is supplied. The crash happens on the C++/emscripten side and never propagates back through the await chain, so the promise just never resolves. Removed `response_format` and rely on the few-shot system prompt + `parsePreset`'s markdown-fence-tolerant parser to enforce JSON shape.
+- Added a 30s hard inference timeout so even unforeseen WebLLM hangs surface as "推論がタイムアウトしました" instead of pinning the LCD input on "AIが解釈中…" forever. Falls back to the dictionary path on timeout.
+
 ## [0.3.0.0] - 2026-05-06
 
 ### Added

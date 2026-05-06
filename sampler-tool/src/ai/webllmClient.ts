@@ -315,16 +315,39 @@ export const inferPreset = async (
   //    add Levenshtein over dictionary keys before returning null).
   if (!engine) return fallbackToDictionary(trimmed);
 
+  // 30s hard ceiling. Qwen2-0.5B should respond in 1-3s on consumer GPUs;
+  // anything beyond ~10s means the engine is wedged. Without this, a stuck
+  // chatCompletion would leave the LCD input stuck on "AIが解釈中…" forever.
+  const INFERENCE_TIMEOUT_MS = 30_000;
+
   try {
-    const completion = await engine.chatCompletion({
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: `「${trimmed}」` },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.2, // low temperature → consistent extraction
-      max_tokens: 64,
-    });
+    // NOTE: We intentionally do NOT pass response_format here.
+    //
+    // WebLLM 0.2.83's grammar compiler (CompileJSONSchema) crashes with
+    // "Cannot pass non-string to std::string" when response_format is set
+    // to {type: 'json_object'} without an explicit stringified `schema`.
+    // The crash happens on the C++ side via emscripten bindings and the
+    // error doesn't reliably propagate back through the await chain — the
+    // chatCompletion promise hangs instead of rejecting, which is what
+    // pinned the LCD input on "AIが解釈中…" for 60s+ in the v0.3.0.0 ship.
+    //
+    // The system prompt + few-shot already constrains the output to a
+    // JSON-only shape, and parsePreset below tolerates markdown fences,
+    // leading whitespace, and trailing prose. For Qwen2-0.5B with 6 few-
+    // shot examples, JSON compliance is reliable enough that grammar
+    // enforcement isn't worth the risk of a 60s hang.
+    const completion = await promiseTimeout(
+      engine.chatCompletion({
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: `「${trimmed}」` },
+        ],
+        temperature: 0.2, // low temperature → consistent extraction
+        max_tokens: 64,
+      }),
+      INFERENCE_TIMEOUT_MS,
+      '推論がタイムアウトしました',
+    );
 
     const text = extractContent(completion);
     if (!text) return fallbackToDictionary(trimmed);
