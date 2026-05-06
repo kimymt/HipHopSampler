@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1.1] - 2026-05-06
+
+### Fixed
+- **iPhone header overflow.** The Settings ⚙ button (and therefore Tour, AI 提案, Install) was being pushed off-screen on iPhones because the transport bar tried to fit Logo + Play + BPM stepper + PADS counter + IDLE/PLAY LED + OfflineBadge + ⚙ on a single row. Hidden on mobile: PADS counter (already implicit from pad coloring), IDLE/PLAY LED (redundant with the play button itself), and OfflineBadge (now surfaced via the AI 提案 row in Settings if needed). Settings cog now stays inside the viewport on iPhone SE width (320px) and up.
+- **Mobile pad-tap was force-opening the sample editor on every touch.** This made it impossible to actually perform on mobile — every attempt to play a beat would cover the pads with the BottomSheet. Mobile pad interaction is now: tap = play (no sheet), long-press 350ms = open editor. Section header text on mobile now reads "PADS · タップで再生 / 長押しで編集" so the gesture is discoverable without a tour step.
+
 ## [0.3.1.0] - 2026-05-06
 
 ### Added

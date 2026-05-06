@@ -21,6 +21,7 @@ PAD_KEYS.forEach((row, rIdx) => {
 export const PadGrid = ({
   samples,
   onPadClick,
+  onPadLongPress,
   selectedPadId,
   onPadFilePicked,
   micSupported = false,
@@ -32,6 +33,13 @@ export const PadGrid = ({
   const [activePads, setActivePads] = useState(new Set());
   const fileInputRef = useRef(null);
   const filePickPadIdRef = useRef(null);
+  // Long-press detection. Tap-and-hold for ~350ms on a loaded pad opens the
+  // sample editor sheet (mobile UX: tap = play, hold = edit). Without this,
+  // mobile users could not perform — every tap was force-opening the sheet
+  // and covering the pad grid.
+  const longPressTimerRef = useRef(null);
+  const longPressFiredRef = useRef(false);
+  const LONG_PRESS_MS = 350;
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -75,6 +83,14 @@ export const PadGrid = ({
   const handlePointerDown = (padId) => {
     onPadClick(padId);
     setActivePads((prev) => new Set([...prev, padId]));
+    // Schedule long-press only if a long-press handler is wired.
+    if (onPadLongPress) {
+      longPressFiredRef.current = false;
+      longPressTimerRef.current = setTimeout(() => {
+        longPressFiredRef.current = true;
+        onPadLongPress(padId);
+      }, LONG_PRESS_MS);
+    }
   };
 
   const handlePointerUp = (padId) => {
@@ -83,6 +99,10 @@ export const PadGrid = ({
       next.delete(padId);
       return next;
     });
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
   };
 
   const handleAddClick = (padId, e) => {

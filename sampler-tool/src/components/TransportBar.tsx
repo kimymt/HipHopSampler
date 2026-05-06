@@ -133,23 +133,27 @@ export const TransportBar = ({
       </div>
 
       <div className="transport-section status-section">
-        <div className="status-item">
-          <div className="status-label">PADS</div>
-          <div className="status-value">
-            <span className="status-num">{loadedCount}</span>
-            <span className="status-denom">/16</span>
-          </div>
-        </div>
-        <div className={`status-led ${isPlaying ? 'on' : ''}`}>
-          <span className="led-dot"></span>
-          <span>{isPlaying ? 'PLAY' : 'IDLE'}</span>
-        </div>
-
-        <OfflineBadge online={online} />
-
-        {/* Desktop: inline storage/install/tour. All viewports: settings cog. */}
+        {/* Mobile redacts PADS counter, IDLE/PLAY LED, and OfflineBadge so the
+         * settings cog stays inside the viewport on iPhone (see commit msg).
+         * Information not lost: PADS count is implicit from pad coloring,
+         * play/idle is implicit from the play button itself, online state
+         * surfaces via the AI 提案 row text inside Settings. */}
         {!isMobile && (
           <>
+            <div className="status-item">
+              <div className="status-label">PADS</div>
+              <div className="status-value">
+                <span className="status-num">{loadedCount}</span>
+                <span className="status-denom">/16</span>
+              </div>
+            </div>
+            <div className={`status-led ${isPlaying ? 'on' : ''}`}>
+              <span className="led-dot"></span>
+              <span>{isPlaying ? 'PLAY' : 'IDLE'}</span>
+            </div>
+
+            <OfflineBadge online={online} />
+
             <StorageBadge info={storageInfo} />
             <InstallButton canInstall={canInstall} onClick={onInstallClick} />
             <button
