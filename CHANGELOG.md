@@ -2,15 +2,117 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.0.0] - 2026-05-06
+## [0.7.1.0] - 2026-05-06
 
 ### Added
-- **Phase 2B.4: 300-entry vibe dictionary.** Grew `extendedKeywords` from 25 → 291 entries, total dictionary 37 → 303. The substring matcher means each new fragment instantly covers dozens of natural-language wrappers ("〜っぽく", "〜な感じ", "〜にして"). Distribution by type: reverb 81 + filter 71 + delay 42 + saturation 36 + lofi 41.
-- New coverage areas: indoor spaces (寝室, バスルーム, リビング, カフェ, レストラン, ジム, 体育館, コンサートホール, 劇場, 映画館, 工場, 倉庫, 駅, 空港), religious (大聖堂, チャペル, 修道院, 神社, 寺), outdoor (山, 谷, 渓谷, 森, 海岸, 砂漠, 公園, 路地, 屋上, 田舎, 滝), abstract (宇宙, 銀河, 異次元, 夢, 天国, 地獄, 地下), genres (アンビエント, シューゲイザー, ドリームポップ, オーケストラ, クラシック, ゴスペル, テクノ, ハウス, トリップホップ, レゲエ, メタル, グランジ, ロック, パンク, ブルース, アコースティック削除, レトロゲーム, チップチューン, ヴェイパーウェイブ, チルホップ), through-barriers (壁越し, ドア越し, 窓越し, ガラス越し, カーテン越し, 厚い壁, 布越し, マイク越し), phone/radio (古い電話, 国際電話, 携帯電話, 公衆電話, インターホン, 短波, FMラジオ, アナウンス, 駅のアナウンス, 店内放送, ヘリコプター, パトカー, メガホン, 拡声器), vehicles (電車の中, 地下鉄, 飛行機), gear (チューブ, 真空管, アンプ, マーシャル, フェンダー, テープエコー, アナログエコー, ロランド, スペースエコー), eras (60年代, 70年代, 80年代, 90年代 with 70s/80s/90s aliases, 昭和, 平成初期), retro tech (VHS, ベータマックス, MD, ウォークマン, ボイスメモ, レコード, ヴァイナル, ファミコン, ゲームボーイ, 古いPC, 留守電, ファクス, ラジカセ, ブラウン管), and onomatopoeia (ピヨピヨ, キンキン, シャリシャリ, モコモコ, ザラザラ, ガリガリ, ガサガサ, プチプチ, パチパチ, ブチブチ, ぐるぐる, ふわふわ).
+- **300-entry vibe dictionary** (Phase 2B.4 — re-merged on top of v0.7.0.0). Grew `extendedKeywords` from 25 → 291 entries, total dictionary 37 → 303. The substring matcher means each new fragment instantly covers dozens of natural-language wrappers ("〜っぽく", "〜な感じ", "〜にして"). Distribution by type: reverb 81 + filter 71 + delay 42 + saturation 36 + lofi 41.
+- New coverage areas: indoor spaces (寝室, バスルーム, リビング, カフェ, レストラン, ジム, 体育館, コンサートホール, 劇場, 映画館, 工場, 倉庫, 駅, 空港), religious (大聖堂, チャペル, 修道院, 神社, 寺), outdoor (山, 谷, 渓谷, 森, 海岸, 砂漠, 公園, 路地, 屋上, 田舎, 滝), abstract (宇宙, 銀河, 異次元, 夢, 天国, 地獄, 地下), genres (アンビエント, シューゲイザー, ドリームポップ, オーケストラ, クラシック, ゴスペル, テクノ, ハウス, トリップホップ, レゲエ, メタル, グランジ, ロック, パンク, ブルース, レトロゲーム, チップチューン, ヴェイパーウェイブ, チルホップ), through-barriers (壁越し, ドア越し, 窓越し, ガラス越し, カーテン越し, 厚い壁, 布越し, マイク越し), phone/radio (古い電話, 国際電話, 携帯電話, 公衆電話, インターホン, 短波, FMラジオ, アナウンス, 駅のアナウンス, 店内放送, ヘリコプター, パトカー, メガホン, 拡声器), vehicles (電車の中, 地下鉄, 飛行機), gear (チューブ, 真空管, アンプ, マーシャル, フェンダー, テープエコー, アナログエコー, ロランド, スペースエコー), eras (60年代, 70年代, 80年代, 90年代 with 70s/80s/90s aliases, 昭和, 平成初期), retro tech (VHS, ベータマックス, MD, ウォークマン, ボイスメモ, レコード, ヴァイナル, ファミコン, ゲームボーイ, 古いPC, 留守電, ファクス, ラジカセ, ブラウン管), and onomatopoeia (ピヨピヨ, キンキン, シャリシャリ, モコモコ, ザラザラ, ガリガリ, ガサガサ, プチプチ, パチパチ, ブチブチ, ぐるぐる, ふわふわ).
 
 ### Changed
 - Moved ベル / 鈴 / 鐘 from delay to reverb. Bell sustain reads as residual reverb tail, not discrete echoes.
 - Moved 滝 from filter to reverb. Waterfall sound is dominated by spatial wash, not high-frequency loss.
+
+### Why ship this on top of Reference Mode
+"人に見せる段階" になり、AI 提案の hit 率が薄いと「結局この機能使えないね」になる。substring matcher のおかげで 291 件追加が数千フレーズのカバレッジに展開する。bundle 影響 +14KB precache のみ。
+
+## [0.7.0.0] - 2026-05-06
+
+### Added
+- **📚 リファレンスモード — Phase 3 B+C: 保存 + テンポ適用**. 解析結果を IndexedDB に保存し、別セッションで呼び出してアプリ全体の BPM に適用できるようになりました。これでリファレンス → 制作行為への直接的な接続が完成。
+  - **「💾 解析を保存」**: ready 状態に追加。専用ダイアログで自分が付ける名前を入力 (例「Track A の感じ」)。同意文「保存される内容: BPM 値・ビート位置の数値配列・あなたが付けた名前 / 保存されない内容: 楽曲ファイル本体・元のファイル名・波形データ」を毎回表示。
+  - **「🎯 このテンポをアプリに適用」**: ready 状態と保存済み解析の両方に表示。タップでメイントランスポートの BPM を一発で同期。BPM ステッパー・ディレイ tempo sync・シーケンサスケジューラがすべて追従。
+  - **保存済み解析の一覧 + 詳細ビュー**: idle 状態でファイルピッカーの上に並び、タップで詳細へ。詳細ビューには永続的な disclaimer (「元の楽曲ファイルは含まれていないため、波形は表示されません」) と削除ボタン。
+
+### 法的ガードレール (Phase 1 から継承・新規 surface)
+- 専用 IndexedDB データベース `reference-analyses` を新設 — `hip-hop-sampler` (ユーザーのサンプル) とは物理分離。saved analysis レコードは `{id, name, bpm, offsetSec, beatPositions, durationSec, createdAt}` のみで、AudioBuffer / 元ファイル名 / 波形データ / アーティスト情報は **絶対に書き込まない**。
+- 保存ダイアログでも詳細ビューでも、何が保存され何が保存されないかを文章で明示。
+- 既存の export ガードレール TODO (PR #44) と整合: 将来エクスポート機能を実装する際、saved analysis レコード全体を「派生数値データ」として扱い、必ず同意ゲートを通すこと。
+
+### 新規ファイル
+- `src/utils/referenceStore.ts`: IndexedDB CRUD (save/list/delete + UUID 生成)
+- `src/hooks/useSavedAnalyses.ts`: React 状態 + 楽観的更新
+- `src/components/SaveAnalysisDialog.tsx` + `.css`: 名前入力 + 同意文 + キャンセル/保存
+- ReferenceMode 内に `SavedAnalysesList` + `SavedAnalysisView` サブコンポーネント追加
+
+### 検証済 (browser preview)
+- 90 BPM トラックを読み込み → 保存ダイアログで「Track A の感じ」と入力 → 保存
+- 解除して idle に戻る → 「保存済みの解析」セクションに「Track A の感じ — 90 BPM · 8s」表示
+- タップ → 詳細ビュー (BPM 90 / 長さ 0:08 / オフセット +0.00s / ビート位置数 12)
+- アプリ BPM を 120 にセット → 「このテンポをアプリに適用」タップ → アプリ BPM が 90 に変化 (トランスポートバー反映確認)
+- TypeScript clean、Vitest 122/122、Build clean (precache 419 → 431KB +12KB)
+
+## [0.6.1.0] - 2026-05-06
+
+### Added
+- **📚 リファレンスモード — Phase 3a: 手動グリッド調整**. ビートグリッドを実際のダウンビートに合わせるための 4 つの操作を追加:
+  - **波形をドラッグ** → グリッド全体が水平移動 (オフセット調整)
+  - **`−` / `+` ボタン** → BPM を ±0.5 単位で微調整 (60-180 範囲でクランプ)
+  - **`÷2` / `×2` ボタン** → 半分テンポ・倍テンポへの強制スナップ (アルゴリズムが間違えた時の救済)
+  - **`再解析` ボタン** → 手動調整を破棄して自動推定値に戻す
+- BPM は専用パネルで赤・大きく表示し、自動推定値と確度を別行に併記。「調整状態」メタカードが「自動推定そのまま」/「手動調整中」を切替表示。
+- オフセット表示: 「`+2.03s · 波形をドラッグでグリッド移動`」(現在のオフセット秒数 + ヒント文)。リセットボタンは 0 以外のときだけ出現。
+
+### Changed
+- `buildBeatGrid(bpm, durationSec, offsetSec)` が新たな `offsetSec` パラメータを受け取り、走り戻り (offset から後ろに) ループで頭側のビートも埋めるように更新。負のオフセットも受け入れて [0, durationSec) 範囲にクランプ。
+- ReferenceMode の ready 状態を `ReadyView` サブコンポーネントに分離。BPM・オフセットの内部 state は ReferenceMode 本体に置きつつ、表示・コントロールはサブコンポーネントへ。
+
+### Tests
+- `bpmEstimate.test.ts` に 3 件追加: 正のオフセット、走り戻りでヘッドを埋める動作、負オフセットのクランプ
+- 計 122/122 passing
+
+### 検証済 (browser preview)
+- 90 BPM 入力で読み込み後、`+` を 4 回タップ → 92 / 「手動調整中」表示
+- `÷2` 拒否 (45 < 60)、`×2` 拒否 (184 > 180)
+- `再解析` で 90 に復帰、「自動推定そのまま」表示
+- 波形を 120px ドラッグ (canvas 472px / duration 8s) → オフセット +2.03s (計算値と完全一致)
+- リセットボタンで 0 に復帰
+
+### 残課題 (Phase 3b 予定)
+- 派生数値データ (BPM + ビート位置配列 + オフセット) のみの **軽量保存** (IndexedDB)。**音声データは絶対に保存しない** (ガードレール継承)。
+
+## [0.6.0.0] - 2026-05-06
+
+### Added
+- **📚 リファレンスモード — Phase 2: 解析エンジン + 波形オーバーレイ**. 読み込んだ楽曲から BPM・ビート位置・打楽器ヒット位置を自動抽出し、Canvas 上に波形 + ビートグリッド (4 拍子目強調) + オンセットマーカーを描画。100% ローカル処理 (Phase 1 のガードレールを継承)、外部ライブラリ追加ゼロ。
+- `src/utils/bpmEstimate.ts`: IOI ヒストグラム + 心理的好みテンポ曲線 (Parncutt 1994 ベースの Gaussian centered at 110 BPM σ=50) で 60-180 BPM 範囲の推定。半分テンポバイアス (120 BPM 入力で 60 を返す問題) を解消。
+- `src/utils/analyzeReference.ts`: 既存 `detectOnsets` の上限を 5000 に引き上げ + BPM 推定 + ビートグリッド生成のオーケストレーター。同期処理だが 1 マイクロタスク yield してローディング UI が描画される機会を確保。
+- `src/components/ReferenceWaveform.tsx`: HiDPI-aware Canvas で波形を描画。ビートグリッドは縦線 (4 拍ごとに明るく)、オンセットは上部の短い tick で表現。ResizeObserver で再描画。
+- `useReferenceTrack` の状態機械に `analyzing` ステップ追加: idle → importing → analyzing → ready。
+
+### Changed
+- ReferenceMode パネル: ready 状態の表示を全面更新。BPM (赤・大きめ・確度 % 付き) を最優先で表示し、波形カードを 120px の高さで埋め込み、長さ・ビート数・ヒット数を補助情報に格下げ。
+
+### 検証済 (browser preview)
+- 90 BPM で生成した kick ループ → 検出値 90 BPM (確度 24%)、ビート 12 / ヒット 11
+- 11 ユニットテスト (bpmEstimate.test.ts) — 60/75/90/120 BPM クリーン入力、±10ms ジッタ、200/40 BPM の半分・倍テンポ折り返し、空入力エラー
+- 全 119 テスト pass、TypeScript clean、Build clean (precache 408 → 412KB)
+
+### 残課題 (Phase 3 予定)
+- ビートグリッドの **手動オフセット調整** (グリッドが実際のダウンビートとズレた時にユーザーが補正できる)
+- 派生数値データ (BPM + ビート位置配列) のみの **軽量保存** (`localStorage` または `IndexedDB`)。**音声データは絶対に保存しない** (Phase 1 ガードレール継承)。
+
+## [0.5.0.0] - 2026-05-06
+
+### Added
+- **📚 リファレンスモード — Phase 1**: load any audio file you like (MP3 / WAV / OGG / M4A / FLAC up to 100MB) and the app shows you its duration / sample rate / channels. Phase 2 (next sub-PR) will overlay the BPM and beat positions onto a waveform so beginners can see the structure of a track they want to learn from.
+- Strict copyright guardrails baked into the import path (per dev brief §2):
+  - **100% local** — file bytes never leave the browser. No upload, no fetch.
+  - **No persistence** — the AudioBuffer lives only in React state. Closing the panel drops the reference for GC. There is no save path, by design.
+  - **No DRM bypass** — DRM-protected files (and corrupt / unsupported codecs) are rejected with a clear "別のファイルでお試しください" message instead of attempting any workaround.
+- Settings now exposes a "📚 リファレンスモード" entry that opens the panel. The panel header carries a permanent orange "REFERENCE MODE" tag plus a green disclaimer "学習用：解析データは端末内でのみ処理され、サーバーへ送信・保存されません" so the legal-defense affordance is visible at every step.
+
+### Why this matters
+Dogfooding feedback (2026-05-06): "操作自体は可能だが曲を完成させるまでには程遠い。具体的にこういうビートを作りたいという目的に対して、こういう手順でやるんだよというガイドが欲しい". Reference Mode is the answer: instead of a built-in demo beat, users load a track they already love and the app explains its structure. Phase 2 will surface BPM + beat positions; Phase 3 will let the user adjust the grid and save just the *numbers* (no audio) so the analysis becomes a re-usable template.
+
+## [0.4.0.0] - 2026-05-06
+
+### Added
+- **🎁 スタータキット**: brand-new users no longer face an empty 4×4 grid. A button next to the PADS section header loads 8 synthesized hip-hop drum samples (kick / snare / closed hat / open hat / clap / 808 / rim / perc) into the first two rows in ~300ms. Generated client-side via Web Audio `OfflineAudioContext` (zero license risk, ~2KB code, no bundle bloat). The button hides automatically once all 8 starter pads are filled. Skips pads that already have a sample so user uploads are never clobbered.
+- **🎵 サンプル音源を探す** in Settings: curated directory of 6 legally-usable sample sites (魔王魂, 効果音ラボ, D-elf, Pixabay, Freesound CC0 filter, r-loops Free) with license notes inline so users don't have to read each site's fine print to know what's safe.
+- New utilities: `src/utils/synthDrums.ts` (8 drum-synth recipes), `src/utils/wavEncode.ts` (AudioBuffer → WAV Blob), `src/hooks/useStarterPack.ts` (orchestrates synthesis → loadSample pipeline).
+
+### Why this matters
+The persona reported "サンプル音源を探すのがすでに大変" — getting hip-hop-flavored audio is the largest barrier to making a first beat. The starter kit unblocks playback in zero seconds; the curated source list provides a path to richer / more authentic sounds for the second beat. Synth drums sound clean by default, which means the lofi/saturation/reverb chips have maximum visible impact when applied — テープ on a synth kick = instant boom-bap.
 
 ## [0.3.2.0] - 2026-05-06
 
