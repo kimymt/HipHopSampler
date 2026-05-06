@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0.0] - 2026-05-06
+
+### Added
+- **📚 リファレンスモード — Phase 3 B+C: 保存 + テンポ適用**. 解析結果を IndexedDB に保存し、別セッションで呼び出してアプリ全体の BPM に適用できるようになりました。これでリファレンス → 制作行為への直接的な接続が完成。
+  - **「💾 解析を保存」**: ready 状態に追加。専用ダイアログで自分が付ける名前を入力 (例「Track A の感じ」)。同意文「保存される内容: BPM 値・ビート位置の数値配列・あなたが付けた名前 / 保存されない内容: 楽曲ファイル本体・元のファイル名・波形データ」を毎回表示。
+  - **「🎯 このテンポをアプリに適用」**: ready 状態と保存済み解析の両方に表示。タップでメイントランスポートの BPM を一発で同期。BPM ステッパー・ディレイ tempo sync・シーケンサスケジューラがすべて追従。
+  - **保存済み解析の一覧 + 詳細ビュー**: idle 状態でファイルピッカーの上に並び、タップで詳細へ。詳細ビューには永続的な disclaimer (「元の楽曲ファイルは含まれていないため、波形は表示されません」) と削除ボタン。
+
+### 法的ガードレール (Phase 1 から継承・新規 surface)
+- 専用 IndexedDB データベース `reference-analyses` を新設 — `hip-hop-sampler` (ユーザーのサンプル) とは物理分離。saved analysis レコードは `{id, name, bpm, offsetSec, beatPositions, durationSec, createdAt}` のみで、AudioBuffer / 元ファイル名 / 波形データ / アーティスト情報は **絶対に書き込まない**。
+- 保存ダイアログでも詳細ビューでも、何が保存され何が保存されないかを文章で明示。
+- 既存の export ガードレール TODO (PR #44) と整合: 将来エクスポート機能を実装する際、saved analysis レコード全体を「派生数値データ」として扱い、必ず同意ゲートを通すこと。
+
+### 新規ファイル
+- `src/utils/referenceStore.ts`: IndexedDB CRUD (save/list/delete + UUID 生成)
+- `src/hooks/useSavedAnalyses.ts`: React 状態 + 楽観的更新
+- `src/components/SaveAnalysisDialog.tsx` + `.css`: 名前入力 + 同意文 + キャンセル/保存
+- ReferenceMode 内に `SavedAnalysesList` + `SavedAnalysisView` サブコンポーネント追加
+
+### 検証済 (browser preview)
+- 90 BPM トラックを読み込み → 保存ダイアログで「Track A の感じ」と入力 → 保存
+- 解除して idle に戻る → 「保存済みの解析」セクションに「Track A の感じ — 90 BPM · 8s」表示
+- タップ → 詳細ビュー (BPM 90 / 長さ 0:08 / オフセット +0.00s / ビート位置数 12)
+- アプリ BPM を 120 にセット → 「このテンポをアプリに適用」タップ → アプリ BPM が 90 に変化 (トランスポートバー反映確認)
+- TypeScript clean、Vitest 122/122、Build clean (precache 419 → 431KB +12KB)
+
 ## [0.6.1.0] - 2026-05-06
 
 ### Added
