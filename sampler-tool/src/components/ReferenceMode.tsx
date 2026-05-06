@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import type { ReferenceState } from '../hooks/useReferenceTrack';
+import { ReferenceWaveform } from './ReferenceWaveform';
 import './ReferenceMode.css';
 
 interface Props {
@@ -92,6 +93,13 @@ export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClo
           </div>
         )}
 
+        {state.status === 'analyzing' && (
+          <div className="reference-mode-importing" aria-live="polite">
+            <div className="reference-mode-spinner" aria-hidden="true" />
+            <span>BPM とビート位置を解析中…</span>
+          </div>
+        )}
+
         {state.status === 'error' && (
           <div className="reference-mode-error" role="alert">
             <strong>読み込めませんでした</strong>
@@ -118,25 +126,47 @@ export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClo
           <div className="reference-mode-ready">
             <dl className="reference-mode-meta">
               <div>
+                <dt>BPM</dt>
+                <dd className="reference-mode-meta-bpm">
+                  {state.analysis.bpm.bpm > 0 ? state.analysis.bpm.bpm : '—'}
+                  {state.analysis.bpm.bpm > 0 && (
+                    <span className="reference-mode-meta-confidence">
+                      {' '}
+                      (確度 {Math.round(state.analysis.bpm.confidence * 100)}%)
+                    </span>
+                  )}
+                </dd>
+              </div>
+              <div>
                 <dt>長さ</dt>
                 <dd>{formatDuration(state.track.durationSec)}</dd>
               </div>
               <div>
-                <dt>サンプルレート</dt>
-                <dd>{state.track.buffer.sampleRate.toLocaleString()} Hz</dd>
+                <dt>検出ビート数</dt>
+                <dd>{state.analysis.beatGrid.length}</dd>
               </div>
               <div>
-                <dt>チャンネル</dt>
-                <dd>{state.track.buffer.numberOfChannels}</dd>
-              </div>
-              <div>
-                <dt>ステータス</dt>
-                <dd className="reference-mode-meta-ok">読み込み完了</dd>
+                <dt>検出ヒット数</dt>
+                <dd>{state.analysis.onsets.length}</dd>
               </div>
             </dl>
+
+            <ReferenceWaveform
+              buffer={state.track.buffer}
+              onsets={state.analysis.onsets}
+              beatGrid={state.analysis.beatGrid}
+              height={120}
+            />
+
+            {state.analysis.bpm.bpm === 0 && (
+              <p className="reference-mode-warning">
+                BPM を推定できませんでした。打楽器パートが薄い曲や非常にゆっくりな曲の可能性があります。
+              </p>
+            )}
+
             <p className="reference-mode-next">
-              <em>次のステップ:</em> BPM とビート位置の抽出 + 波形表示
-              (Phase 2 で実装予定)
+              <em>次のステップ:</em> ビートグリッドの手動調整 + 派生データの軽量保存
+              (Phase 3 で実装予定)
             </p>
             <button type="button" className="reference-mode-clear-btn" onClick={onClear}>
               解除

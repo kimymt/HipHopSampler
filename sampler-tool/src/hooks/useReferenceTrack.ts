@@ -4,32 +4,33 @@ import {
   errorMessage,
   type ImportSuccess,
 } from '../utils/audioImportValidation';
+import { analyzeReferenceTrack, type ReferenceAnalysis } from '../utils/analyzeReference';
 
 interface Args {
   initAudioContext: () => AudioContext | null;
 }
 
 /**
- * Reference Mode (Phase 1): import + validate + hold in memory only.
+ * Reference Mode state machine.
  *
- * State machine:
- *   idle → importing → ready (track loaded)
- *                    \→ error (with message; user can retry)
+ *   idle → importing → analyzing → ready (track + analysis)
+ *                                \→ error (with message; user can retry)
  *
- * Critical: the AudioBuffer lives ONLY in this hook's React state. It is
- * never written to IndexedDB or any storage. When the component unmounts or
- * the user clears the track, the buffer is dropped and GC eventually
- * reclaims the memory. This is what enforces the "no persistence" rule
- * from the dev brief — there's literally no save path.
+ * Phase 1 → 2 change: a new `analyzing` step runs after decode succeeds.
+ * The decoded AudioBuffer + analysis results live only in this hook's
+ * React state. Per Reference Mode rules they are never written to
+ * IndexedDB / localStorage / any persistence layer. Closing the panel
+ * clears state, which drops the AudioBuffer reference for GC.
  *
- * Phase 2 will add BPM + beat detection (returning {bpm, beats: number[]}).
- * Phase 3 will add interactive grid adjustment + lightweight save of the
- * derived numbers (NOT the audio).
+ * Phase 3 will add `adjusted` (user-tweaked) state, with a tiny JSON
+ * snapshot saved containing ONLY the BPM number + beat-position array
+ * (numeric data, not audio).
  */
 export type ReferenceState =
   | { status: 'idle' }
   | { status: 'importing' }
-  | { status: 'ready'; track: ImportSuccess }
+  | { status: 'analyzing'; track: ImportSuccess }
+  | { status: 'ready'; track: ImportSuccess; analysis: ReferenceAnalysis }
   | { status: 'error'; message: string };
 
 export const useReferenceTrack = ({ initAudioContext }: Args) => {
@@ -47,19 +48,28 @@ export const useReferenceTrack = ({ initAudioContext }: Args) => {
       }
       setState({ status: 'importing' });
       const result = await importReferenceFile(file, ctx);
-      // Discriminate by `ok` field — TS doesn't narrow `result.error` purely
-      // from ok===false in some configs, so destructure explicitly.
-      if (result.ok === true) {
-        setState({ status: 'ready', track: result.data });
-      } else {
+      if (result.ok !== true) {
         setState({ status: 'error', message: errorMessage(result.error) });
+        return;
+      }
+
+      const track = result.data;
+      setState({ status: 'analyzing', track });
+
+      try {
+        const analysis = await analyzeReferenceTrack(track.buffer);
+        setState({ status: 'ready', track, analysis });
+      } catch (err) {
+        setState({
+          status: 'error',
+          message: `解析中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`,
+        });
       }
     },
     [initAudioContext],
   );
 
-  /** Clear the imported track. Drops the AudioBuffer reference so GC can
-   * reclaim the (potentially 50MB+) memory. */
+  /** Clear the imported track + analysis. Drops AudioBuffer ref for GC. */
   const clear = useCallback(() => {
     setState({ status: 'idle' });
   }, []);

@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0.0] - 2026-05-06
+
+### Added
+- **📚 リファレンスモード — Phase 2: 解析エンジン + 波形オーバーレイ**. 読み込んだ楽曲から BPM・ビート位置・打楽器ヒット位置を自動抽出し、Canvas 上に波形 + ビートグリッド (4 拍子目強調) + オンセットマーカーを描画。100% ローカル処理 (Phase 1 のガードレールを継承)、外部ライブラリ追加ゼロ。
+- `src/utils/bpmEstimate.ts`: IOI ヒストグラム + 心理的好みテンポ曲線 (Parncutt 1994 ベースの Gaussian centered at 110 BPM σ=50) で 60-180 BPM 範囲の推定。半分テンポバイアス (120 BPM 入力で 60 を返す問題) を解消。
+- `src/utils/analyzeReference.ts`: 既存 `detectOnsets` の上限を 5000 に引き上げ + BPM 推定 + ビートグリッド生成のオーケストレーター。同期処理だが 1 マイクロタスク yield してローディング UI が描画される機会を確保。
+- `src/components/ReferenceWaveform.tsx`: HiDPI-aware Canvas で波形を描画。ビートグリッドは縦線 (4 拍ごとに明るく)、オンセットは上部の短い tick で表現。ResizeObserver で再描画。
+- `useReferenceTrack` の状態機械に `analyzing` ステップ追加: idle → importing → analyzing → ready。
+
+### Changed
+- ReferenceMode パネル: ready 状態の表示を全面更新。BPM (赤・大きめ・確度 % 付き) を最優先で表示し、波形カードを 120px の高さで埋め込み、長さ・ビート数・ヒット数を補助情報に格下げ。
+
+### 検証済 (browser preview)
+- 90 BPM で生成した kick ループ → 検出値 90 BPM (確度 24%)、ビート 12 / ヒット 11
+- 11 ユニットテスト (bpmEstimate.test.ts) — 60/75/90/120 BPM クリーン入力、±10ms ジッタ、200/40 BPM の半分・倍テンポ折り返し、空入力エラー
+- 全 119 テスト pass、TypeScript clean、Build clean (precache 408 → 412KB)
+
+### 残課題 (Phase 3 予定)
+- ビートグリッドの **手動オフセット調整** (グリッドが実際のダウンビートとズレた時にユーザーが補正できる)
+- 派生数値データ (BPM + ビート位置配列) のみの **軽量保存** (`localStorage` または `IndexedDB`)。**音声データは絶対に保存しない** (Phase 1 ガードレール継承)。
+
 ## [0.5.0.0] - 2026-05-06
 
 ### Added
