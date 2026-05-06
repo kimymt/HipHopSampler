@@ -94,4 +94,32 @@ describe('buildBeatGrid', () => {
     // 60 BPM → 1s per beat → grid: 0, 1, 2 (3 is excluded since loop is t < dur)
     expect(grid).toEqual([0, 1, 2]);
   });
+
+  it('honors a positive offset (intro-aware grid)', () => {
+    // 120 BPM, 4s, offset 0.25s → beats at 0.25, 0.75, 1.25, 1.75, 2.25,
+    // 2.75, 3.25, 3.75. The walk-backwards loop also adds nothing < 0.25
+    // because 0.25 - 0.5 = -0.25 < 0.
+    const grid = buildBeatGrid(120, 4, 0.25);
+    expect(grid).toHaveLength(8);
+    expect(grid[0]).toBeCloseTo(0.25);
+    expect(grid[1]).toBeCloseTo(0.75);
+    expect(grid[grid.length - 1]).toBeCloseTo(3.75);
+  });
+
+  it('walks backwards from offset to fill the head of the grid', () => {
+    // 120 BPM, 4s, offset 1.0s → grid should still include 0.0 and 0.5
+    // (walked backwards from 1.0 by 0.5s steps), then 1.0, 1.5, ..., 3.5
+    const grid = buildBeatGrid(120, 4, 1.0);
+    expect(grid).toHaveLength(8);
+    expect(grid[0]).toBeCloseTo(0);
+    expect(grid[1]).toBeCloseTo(0.5);
+    expect(grid[2]).toBeCloseTo(1.0);
+  });
+
+  it('clamps negative offsets so first beat is always >= 0', () => {
+    const grid = buildBeatGrid(120, 4, -1.25);
+    // Beats at -1.25, -0.75, -0.25 are clamped out (< 0). First emitted
+    // is 0.25, then 0.75, 1.25, ...
+    expect(grid[0]).toBeCloseTo(0.25);
+  });
 });
