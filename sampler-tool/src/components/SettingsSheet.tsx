@@ -105,6 +105,8 @@ export const SettingsSheet = ({
         </div>
 
         {ai && <AiSuggestionRow ai={ai} onAiToggle={onAiToggle} />}
+
+        <SampleSourcesRow />
       </div>
     </div>
   );
@@ -180,3 +182,43 @@ const AiSuggestionRow: React.FC<{
     </div>
   );
 };
+
+/**
+ * Phase 2C: external sample sources directory.
+ *
+ * Curated list of sites where users can find legally-usable hip-hop sample
+ * material. The starter kit (synthesized drums, see useStarterPack)
+ * unblocks the immediate "I have nothing on the pads" problem; this row
+ * solves the "I want richer / more authentic sounds" follow-up.
+ *
+ * License classes summarized in the link titles so users don't have to
+ * read the destination site's fine print just to know what's safe.
+ */
+const SAMPLE_SOURCES: Array<{ name: string; url: string; lang: 'ja' | 'en'; note: string }> = [
+  { name: '魔王魂', url: 'https://maou.audio/', lang: 'ja', note: '商用OK・改変OK・クレジット任意' },
+  { name: '効果音ラボ', url: 'https://soundeffect-lab.info/', lang: 'ja', note: '商用無料・報告不要' },
+  { name: 'D-elf (HIP HOP)', url: 'https://www.d-elf.com/hip-hop-free-bgm', lang: 'ja', note: 'ヒップホップ・TRAP 専門' },
+  { name: 'Pixabay', url: 'https://pixabay.com/sound-effects/search/hip%20hop/', lang: 'en', note: 'No attribution required' },
+  { name: 'Freesound (CC0)', url: 'https://freesound.org/search/?q=hip+hop&f=license:%22Creative+Commons+0%22', lang: 'en', note: 'Filtered to CC0 only' },
+  { name: 'r-loops Free', url: 'https://r-loops.com/category/sample-packs/free-hip-hop-samples', lang: 'en', note: 'Royalty-free, commercial OK' },
+];
+
+const SampleSourcesRow: React.FC = () => (
+  <div className="settings-row settings-row-sources">
+    <div className="settings-row-label">
+      <strong>🎵 サンプル音源を探す</strong>
+      <span>合法に使える素材サイト集 (新しいタブで開きます)</span>
+      <ul className="sample-source-list">
+        {SAMPLE_SOURCES.map((src) => (
+          <li key={src.url}>
+            <a href={src.url} target="_blank" rel="noopener noreferrer">
+              <span className="sample-source-flag">{src.lang === 'ja' ? '🇯🇵' : '🌐'}</span>
+              <span className="sample-source-name">{src.name}</span>
+              <span className="sample-source-note">{src.note}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+);
