@@ -105,11 +105,10 @@ export default function App() {
     }
     setSelectedPadId(padId);
 
-    // On mobile, opening the sample sheet only when the pad has audio.
-    // Empty pads don't open the sheet — the "+" button on the pad handles file pick.
-    if (isMobile && sample?.buffer) {
-      setSampleSheetOpen(true);
-    }
+    // Mobile: tap = play only. Long-press opens the sample editor (see
+    // handlePadLongPress). Without this split, every tap on a loaded pad
+    // was force-opening the BottomSheet, covering the pad grid and making
+    // it impossible to actually perform.
 
     if (isRecording && currentStep >= 0) {
       setPatterns((prev) => {
@@ -119,6 +118,16 @@ export default function App() {
         return { ...prev, [padId]: next };
       });
     }
+  };
+
+  const handlePadLongPress = (padId) => {
+    // Long-press → open the sample editor on mobile. On desktop the editor
+    // panel is always inline so we don't need a sheet there.
+    if (!isMobile) return;
+    const sample = getSample(padId);
+    if (!sample?.buffer) return; // empty pad: no editor to show
+    setSelectedPadId(padId);
+    setSampleSheetOpen(true);
   };
 
   const handlePadFilePicked = (padId, file) => {
@@ -303,11 +312,12 @@ export default function App() {
             <section className="workspace-left">
               <h2 className="section-label">
                 <span className="dot"></span>
-                PADS · クリック / キーで再生
+                {isMobile ? 'PADS · タップで再生 / 長押しで編集' : 'PADS · クリック / キーで再生'}
               </h2>
               <PadGrid
                 samples={samples}
                 onPadClick={handlePadClick}
+                onPadLongPress={handlePadLongPress}
                 selectedPadId={selectedPadId}
                 onPadFilePicked={handlePadFilePicked}
                 micSupported={mic.supported}
