@@ -77,6 +77,17 @@ export const extendedKeywords: readonly PresetEntry[] = [
   { keyword: 'カセット', type: 'lofi', wet: 0.6, param: 0.5 },
   { keyword: 'ローバッテリー', type: 'lofi', wet: 0.8, param: 0.7 },
   { keyword: '8bit', type: 'lofi', wet: 0.9, param: 0.85 },
+  // Phase 2B real-user vocab: phrases like "ホールに響く感じ", "響き渡る",
+  // "ライブハウスっぽく", "トンネルの中" need substring hits to feel
+  // responsive. Each entry is a noun/verb fragment a user is likely to
+  // include in a longer description.
+  { keyword: 'ホール', type: 'reverb', wet: 0.7, param: 0.9 },
+  { keyword: '響く', type: 'reverb', wet: 0.6, param: 0.75 },
+  { keyword: '響き', type: 'reverb', wet: 0.6, param: 0.75 },
+  { keyword: '反響', type: 'reverb', wet: 0.7, param: 0.85 },
+  { keyword: 'ライブハウス', type: 'reverb', wet: 0.5, param: 0.6 },
+  { keyword: 'トンネル', type: 'filter', wet: 0.8, param: 0.3 },
+  { keyword: '海中', type: 'filter', wet: 0.75, param: 0.18 },
 ];
 
 /**
@@ -87,11 +98,38 @@ export const extendedKeywords: readonly PresetEntry[] = [
 export const presetDictionary: readonly PresetEntry[] = [...chipKeywords, ...extendedKeywords];
 
 /**
- * Lookup helper. Case-insensitive, exact keyword match.
- * Returns undefined if no entry exists. Phase 2B will replace this with
- * fuzzy / LLM-based matching that still falls back to this exact lookup.
+ * Exact-match lookup (case-insensitive). Used for Phase 2A chip taps and as
+ * the first lookup tier inside `inferPreset`.
  */
 export function findPresetByKeyword(keyword: string): PresetEntry | undefined {
   const k = keyword.trim().toLowerCase();
   return presetDictionary.find((e) => e.keyword.toLowerCase() === k);
+}
+
+/**
+ * Substring fallback. When a user types a longer phrase like "ホールに響く感じ"
+ * or "アシッドっぽい感じ", we look for the longest dictionary keyword that
+ * appears as a substring of the input.
+ *
+ * Why longest first: avoids the "AMラジオ" / "ラジオ" ambiguity and prefers
+ * the more specific entry. "AMラジオの音にして" matches "AMラジオ", not "ラジオ".
+ *
+ * Returns undefined when no keyword is contained in the input.
+ *
+ * Trade-off: this can pick a chip-tier preset for a multi-modifier phrase
+ * (e.g. "暗い水中" picks "水中" filter and ignores "暗い"). Acceptable for
+ * Phase 2B because the LLM tier handles the more complex cases. The
+ * substring tier is the "instant 80%" net.
+ */
+export function findPresetBySubstring(input: string): PresetEntry | undefined {
+  const haystack = input.trim().toLowerCase();
+  if (!haystack) return undefined;
+  let best: PresetEntry | undefined;
+  for (const entry of presetDictionary) {
+    const needle = entry.keyword.toLowerCase();
+    if (haystack.includes(needle)) {
+      if (!best || needle.length > best.keyword.length) best = entry;
+    }
+  }
+  return best;
 }

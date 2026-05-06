@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1.0] - 2026-05-06
+
+### Added
+- Substring fallback for vibe input. Phrases like "ホールに響く感じ", "アシッドっぽい", "トンネルの中で叫ぶ感じ" now match instantly without an LLM round-trip — the longest dictionary keyword contained in the input wins. Saves the user the 2-3s LLM wait for the common case where they wrap a known keyword in conversational filler.
+- 7 new vocabulary entries to `extendedKeywords` chosen for substring coverage of natural reverb/filter phrasing: `ホール` / `響く` / `響き` / `反響` / `ライブハウス` (reverb), `トンネル` / `海中` (filter).
+
+### Changed
+- `inferPreset` lookup tiers are now: exact match → substring match → LLM → LLM-fallback (substring-aware). Previously: exact → LLM → exact-only fallback.
+- TODO.md: documented Phase 2B.3 as the ongoing dictionary-enrichment phase. Real-user phrasing surfaced via QA gets folded into `extendedKeywords` over time; chip lineup stays untouched.
+
 ## [0.3.0.1] - 2026-05-06
 
 ### Fixed
