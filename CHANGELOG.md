@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0.0] - 2026-05-06
+
+### Added
+- Phase 2B.2: free-form vibe input. When the WebLLM engine is ready, EffectVibeChips appends a Mono-styled "もっと" chip that toggles a LCD-style text panel below the chip row. Type any Japanese phrase ("ピヨピヨ", "水族館っぽく", "80年代風"), press Enter or GO, and the on-device LLM interprets it into `{type, wet, param}` and applies it. Falls back to the keyword dictionary when the LLM produces malformed output. Esc closes the panel.
+- LCD input has the same display-bg + display-red palette as the BPM display (DESIGN.md §6/§9.6 vocabulary), with a blinking caret prompt and a green "→ TYPE WET% · PARAM%" confirmation when the result lands.
+- `<meta name="mobile-web-app-capable">` added alongside the legacy `apple-mobile-web-app-capable` so modern Chromium stops emitting the deprecation warning.
+
+### Fixed
+- After a page reload, the AI 提案 toggle was getting pinned at "0%" forever instead of fast-pathing to ON when the model was already cached. Root cause: `useWebLLM`'s effect listed `state.status` in its dependency array, so the first `setState({loading})` triggered a re-render → cleanup set `cancelled = true` → every subsequent progress callback and the final `setState({status:'ready'})` was skipped. Removed `state.status` from the deps and gated unsupported browsers via `detectWebLLMSupport()` inside the effect instead.
+
 ## [0.2.0.3] - 2026-05-05
 
 ### Fixed

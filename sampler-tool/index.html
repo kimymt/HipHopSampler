@@ -13,6 +13,11 @@
 
     <!-- iOS / Apple PWA -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- mobile-web-app-capable is the modern standard (Chromium 121+). Keep
+         apple-mobile-web-app-capable for iOS Safari which still reads only the
+         apple-prefixed name. The deprecation warning in modern Chrome is gone
+         once the standard one is present. -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="HH Sampler" />

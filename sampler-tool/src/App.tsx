@@ -340,6 +340,8 @@ export default function App() {
               onFxChange={setFx}
               bypass={fxBypass}
               onBypassChange={setFxBypass}
+              aiState={ai.state}
+              onAiInfer={ai.infer}
             />
           </section>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { EFFECT_META, EFFECT_TYPES, type EffectType, type FxState } from '../effects/types';
 import { EffectVibeChips } from './EffectVibeChips';
+import type { WebLLMState, VibeInferenceResult } from '../ai/webllmClient';
 import './EffectPanel.css';
 
 interface Props {
@@ -8,6 +9,10 @@ interface Props {
   onFxChange: (next: FxState) => void;
   bypass: boolean;
   onBypassChange: (next: boolean) => void;
+  /** WebLLM state (Phase 2B). When ready, EffectVibeChips appends a "もっと" chip. */
+  aiState?: WebLLMState;
+  /** Inference callback (Phase 2B). When set, the "もっと" chip + LCD input wire to it. */
+  onAiInfer?: (vibe: string) => Promise<VibeInferenceResult | null>;
 }
 
 /**
@@ -23,7 +28,14 @@ interface Props {
  *   {type, wet, param} presets. Type buttons + knobs remain as the manual
  *   path, so users see chip → knob ramp animation and learn the mapping.
  */
-export const EffectPanel: React.FC<Props> = ({ fx, onFxChange, bypass, onBypassChange }) => {
+export const EffectPanel: React.FC<Props> = ({
+  fx,
+  onFxChange,
+  bypass,
+  onBypassChange,
+  aiState,
+  onAiInfer,
+}) => {
   const meta = EFFECT_META[fx.type];
   const isActive = fx.type !== 'none' && !bypass;
 
@@ -67,7 +79,13 @@ export const EffectPanel: React.FC<Props> = ({ fx, onFxChange, bypass, onBypassC
         </button>
       </div>
 
-      <EffectVibeChips fx={fx} onFxChange={onFxChange} onVibeAnnounce={handleVibeAnnounce} />
+      <EffectVibeChips
+        fx={fx}
+        onFxChange={onFxChange}
+        onVibeAnnounce={handleVibeAnnounce}
+        aiReady={aiState?.status === 'ready'}
+        onAiInfer={onAiInfer}
+      />
 
       <div className="effect-type-row">
         {EFFECT_TYPES.map((t) => (

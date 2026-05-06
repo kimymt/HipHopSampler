@@ -96,6 +96,167 @@
     0 0 12px rgba(240, 74, 31, 0.4);
 }
 
+/* §9.15: 「もっと」chip uses Mono 11px uppercase letter-spacing 1.5px to keep
+ * the hardware-stencil print feel. Differentiates it from the kana chips so
+ * users notice it as a separate kind of input ("type your own"). */
+.effect-vibe-chip-more {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ── Phase 2B.2: LCD-style vibe input panel ───────────────────────── */
+
+.vibe-input-panel {
+  margin: 6px 12px 0;
+  padding: 8px 10px 6px;
+  border-radius: 6px;
+  background: var(--display-bg);
+  border: 1px solid var(--display-frame, #2a241d);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  /* Slide-in: small downward reveal so it feels like the chip "extends" the
+   * row rather than popping in from nowhere. */
+  animation: vibe-panel-in 180ms ease-out;
+}
+
+@keyframes vibe-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vibe-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vibe-input-prompt {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--display-red);
+  text-shadow: 0 0 4px rgba(255, 51, 34, 0.5);
+  /* blinking caret-style chevron */
+  animation: vibe-prompt-blink 1s steps(2) infinite;
+}
+
+@keyframes vibe-prompt-blink {
+  to {
+    opacity: 0.4;
+  }
+}
+
+.vibe-input-field {
+  flex: 1 1 auto;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--display-red);
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 4px rgba(255, 51, 34, 0.5);
+  padding: 4px 0;
+  min-width: 0;
+  caret-color: var(--display-red);
+}
+
+.vibe-input-field::placeholder {
+  color: rgba(255, 51, 34, 0.35);
+}
+
+.vibe-input-field:disabled {
+  opacity: 0.5;
+}
+
+.vibe-input-go {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 6px 12px;
+  min-height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--te-orange-light), var(--te-orange));
+  border: 1px solid var(--te-orange-dark);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 200, 0.5),
+    0 1px 3px rgba(150, 40, 10, 0.4);
+  transition: transform 0.06s ease, opacity 0.1s ease;
+}
+
+.vibe-input-go:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.vibe-input-go:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.vibe-input-go:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vibe-input-status {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  min-height: 14px;
+  color: var(--ink-muted);
+}
+
+.vibe-input-status--thinking {
+  color: var(--display-red);
+  text-shadow: 0 0 4px rgba(255, 51, 34, 0.4);
+  animation: vibe-thinking-pulse 1s ease-in-out infinite;
+}
+
+@keyframes vibe-thinking-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.vibe-input-status--applied {
+  color: #5ee06b;
+  text-shadow: 0 0 4px rgba(94, 224, 107, 0.4);
+}
+
+.vibe-input-status--no-match,
+.vibe-input-status--error {
+  color: #ffb84d;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .vibe-input-go {
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 11px;
+  }
+  .vibe-input-field {
+    font-size: 16px; /* iOS auto-zoom prevention */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vibe-input-panel,
+  .vibe-input-prompt,
+  .vibe-input-status--thinking {
+    animation: none;
+  }
+}
+
 @media (hover: none), (pointer: coarse) {
   /* §9.15: モバイル 38×60min。タップターゲット 44×44 は内側 padding 込みで満たす */
   .effect-vibe-chip {
