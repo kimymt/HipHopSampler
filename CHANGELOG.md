@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0.2] - 2026-05-05
+
+### Fixed
+- AI 提案 toggle no longer hangs at 0% on devices that report `navigator.gpu` but cannot supply a usable WebGPU adapter (e.g. headless Chromium, sandboxed environments, some virtual machines). Three new failure paths surface real errors to the UI instead of letting the download spin forever:
+  - **Adapter pre-check** (10s timeout): runs `gpu.requestAdapter()` before starting the 300MB download. Fails fast with "GPU アダプタが取得できません…" if null.
+  - **Stall watchdog** (60s): if the WebLLM progress callback stops firing for a full minute, abort with "ダウンロードが進みません…" so the user can check their network.
+  - **Full load timeout** (5 min): hard ceiling for the entire load. Aborts with "読み込みが時間切れになりました…" if something deeper hangs.
+- All three errors flow through the existing `useWebLLM` error state, surfacing the message in the Settings AI 提案 row and re-enabling the toggle for retry.
+
 ## [0.2.0.1] - 2026-05-05
 
 ### Fixed
