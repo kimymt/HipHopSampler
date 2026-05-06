@@ -33,7 +33,7 @@ export const SettingsSheet = ({
   onHelpClick: () => void;
   storageInfo: unknown;
   audioContext?: AudioContext | null;
-  ai?: { state: WebLLMState; optIn: boolean } | null;
+  ai?: { state: WebLLMState; optIn: boolean; loadElapsedSec: number } | null;
   onAiToggle?: (on: boolean) => void;
 }) => {
   if (!open) return null;
@@ -121,16 +121,19 @@ export const SettingsSheet = ({
  *   - When ready, show ON pill identical to the Record row for consistency.
  */
 const AiSuggestionRow: React.FC<{
-  ai: { state: WebLLMState; optIn: boolean };
+  ai: { state: WebLLMState; optIn: boolean; loadElapsedSec: number };
   onAiToggle?: (on: boolean) => void;
 }> = ({ ai, onAiToggle }) => {
-  const { state, optIn } = ai;
+  const { state, optIn, loadElapsedSec } = ai;
 
   const subtitle = (() => {
     if (state.status === 'unsupported') return state.reason;
     if (state.status === 'loading') {
       const pct = Math.round(state.progress * 100);
-      return `${state.text} (${pct}%)`;
+      // Elapsed seconds give the user motion when WebLLM's own progress
+      // callback hasn't fired yet (initial manifest fetch can sit at 0% for
+      // 5-15s on a slow connection). Without this, "0%" looks frozen.
+      return `${state.text} ${pct}% · ${loadElapsedSec}秒経過`;
     }
     if (state.status === 'error') return `エラー: ${state.message}`;
     if (state.status === 'ready') return '日本語で「ピヨピヨ」「水族館っぽく」と入れると AI が解釈します';
@@ -138,12 +141,31 @@ const AiSuggestionRow: React.FC<{
   })();
 
   const disabled = state.status === 'unsupported';
+  // When loading hasn't ticked past 0%, show an indeterminate shimmer so the
+  // bar is visibly alive. As soon as a real progress number arrives, switch
+  // to a determinate bar that fills proportionally.
+  const showIndeterminate =
+    state.status === 'loading' && state.progress < 0.005 && loadElapsedSec >= 1;
 
   return (
-    <div className="settings-row">
+    <div className="settings-row settings-row-ai">
       <div className="settings-row-label">
         <strong>🤖 AI 提案</strong>
         <span>{subtitle}</span>
+        {state.status === 'loading' && (
+          <div
+            className={`ai-progress-bar ${showIndeterminate ? 'is-indeterminate' : ''}`}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(state.progress * 100)}
+          >
+            <div
+              className="ai-progress-fill"
+              style={{ width: `${Math.max(2, state.progress * 100)}%` }}
+            />
+          </div>
+        )}
       </div>
       <button
         className={`settings-toggle ${optIn && state.status !== 'unsupported' ? 'on' : ''}`}

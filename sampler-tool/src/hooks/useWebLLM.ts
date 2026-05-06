@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   detectWebLLMSupport,
   getStoredOptIn,
@@ -40,6 +40,12 @@ export const useWebLLM = () => {
 
   const [optIn, setOptIn] = useState<boolean>(() => getStoredOptIn());
 
+  // Elapsed seconds since the current load started. Surfaces "ダウンロード中…
+  // 12秒経過" so the user has visible motion even when WebLLM's own progress
+  // callback stalls at 0% during the initial manifest+tokenizer fetch.
+  const [loadElapsedSec, setLoadElapsedSec] = useState(0);
+  const loadStartedAtRef = useRef<number | null>(null);
+
   // Auto-load on mount if already opted in and supported.
   //
   // CRITICAL: deps must NOT include `state.status`. The first `setState({loading})`
@@ -59,6 +65,15 @@ export const useWebLLM = () => {
     if (!support.supported) return;
 
     let cancelled = false;
+    loadStartedAtRef.current = Date.now();
+    setLoadElapsedSec(0);
+    // Tick every second so the user sees motion even when WebLLM's own
+    // progress callback is silent (initial manifest fetch / shader compile).
+    const elapsedTimer = setInterval(() => {
+      if (cancelled || loadStartedAtRef.current === null) return;
+      setLoadElapsedSec(Math.floor((Date.now() - loadStartedAtRef.current) / 1000));
+    }, 1000);
+
     const startLoad = async () => {
       try {
         const cached = await isWebLLMCached();
@@ -84,6 +99,8 @@ export const useWebLLM = () => {
 
     return () => {
       cancelled = true;
+      clearInterval(elapsedTimer);
+      loadStartedAtRef.current = null;
     };
   }, [optIn]);
 
@@ -116,6 +133,7 @@ export const useWebLLM = () => {
   return {
     state,
     optIn,
+    loadElapsedSec,
     setOptedIn,
     retry,
     infer,

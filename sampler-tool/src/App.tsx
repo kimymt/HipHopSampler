@@ -388,7 +388,7 @@ export default function App() {
         onHelpClick={() => setTourOpen(true)}
         storageInfo={storageInfo}
         audioContext={audioContext}
-        ai={{ state: ai.state, optIn: ai.optIn }}
+        ai={{ state: ai.state, optIn: ai.optIn, loadElapsedSec: ai.loadElapsedSec }}
         onAiToggle={ai.setOptedIn}
       />
 
