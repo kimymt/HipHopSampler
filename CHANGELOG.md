@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1.1] - 2026-05-07
+
+### Changed
+- **App.tsx リファクタ**: 477 → 310 行 (35% 減)。挙動・UI は完全に同一、内部構造のみ整理。次の大型機能 (Phase 3c シーケンサー連携、エクスポート、iPad レイアウト等) を載せる時に App.tsx を再度膨張させない踏み台。
+  - 抽出: `usePatternEditor` (パターン state + record/toggle/clear)、`useSampleEditing` (setIn/setOut/loop/trim/remove)、`SamplePanel`、`Workspace` (`<main>` 内側)、`AppOverlays` (Tour/Settings/ReferenceMode/StartupLoader/IosGuide/UpdateToast/AudioGate/MicErrorToast)。
+  - 検証: TypeScript clean、Vitest 122/122 pass、build clean (precache 433.91 KiB 維持)。
+
+### Fixed
+- **VERSION ファイルのマージコンフリクトマーカー**: 直前の PR #41 マージ時にコンフリクト未解決のまま main に入っていた状態を修正。`<<<<<<< HEAD / 0.4.0.0 / ======= / 0.7.0.0 / >>>>>>> origin/main` のリテラル文字列が VERSION に残存していた。CHANGELOG の表記と整合する 0.7.1.1 にリセット。
+
 ## [0.7.1.0] - 2026-05-06
 
 ### Added
