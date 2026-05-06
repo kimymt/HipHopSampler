@@ -71,10 +71,14 @@ describe('chipKeywords', () => {
 });
 
 describe('extendedKeywords', () => {
-  it('exposes 25 entries (18 Phase 2B reserved + 7 real-user vocab additions)', () => {
-    // 18 original + 7 additions (ホール, 響く, 響き, 反響, ライブハウス,
-    // トンネル, 海中) for natural-phrase substring coverage.
-    expect(extendedKeywords).toHaveLength(25);
+  it('exposes 291 entries after Phase 2B.4 expansion (300-target dictionary)', () => {
+    // Grew from 25 → 291 in Phase 2B.4. Distribution by type:
+    //   reverb 81 + filter 71 + delay 42 + saturation 36 + lofi 41
+    //   plus the 1 filter ぼんやり inherited from before grouping = 271?
+    // Actual count is 291; if you change the dictionary, regenerate by
+    // running: grep -c "^  { keyword:" src/effects/presetDictionary.ts
+    // and subtract the 12 chip entries.
+    expect(extendedKeywords).toHaveLength(291);
   });
 
   it('every entry has a valid EffectType and clamped wet/param', () => {
@@ -90,8 +94,8 @@ describe('extendedKeywords', () => {
 });
 
 describe('presetDictionary', () => {
-  it('is the union of chip and extended (37 entries after Phase 2B vocab additions)', () => {
-    expect(presetDictionary).toHaveLength(37);
+  it('is the union of chip and extended (303 entries after Phase 2B.4)', () => {
+    expect(presetDictionary).toHaveLength(303);
     expect(presetDictionary.length).toBe(chipKeywords.length + extendedKeywords.length);
   });
 
@@ -118,7 +122,10 @@ describe('findPresetByKeyword', () => {
   });
 
   it('returns undefined for an unknown keyword', () => {
-    expect(findPresetByKeyword('ピヨピヨ')).toBeUndefined();
+    // Use a string deliberately absent from the dictionary. Past versions
+    // used "ピヨピヨ" but Phase 2B.4 added it as a chirp filter entry, so
+    // pick something even more unlikely to ever be added.
+    expect(findPresetByKeyword('ぱんだぱんだぱんだ')).toBeUndefined();
   });
 
   it('is case-insensitive (matters for AMラジオ vs amラジオ)', () => {

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0.0] - 2026-05-06
+
+### Added
+- **Phase 2B.4: 300-entry vibe dictionary.** Grew `extendedKeywords` from 25 → 291 entries, total dictionary 37 → 303. The substring matcher means each new fragment instantly covers dozens of natural-language wrappers ("〜っぽく", "〜な感じ", "〜にして"). Distribution by type: reverb 81 + filter 71 + delay 42 + saturation 36 + lofi 41.
+- New coverage areas: indoor spaces (寝室, バスルーム, リビング, カフェ, レストラン, ジム, 体育館, コンサートホール, 劇場, 映画館, 工場, 倉庫, 駅, 空港), religious (大聖堂, チャペル, 修道院, 神社, 寺), outdoor (山, 谷, 渓谷, 森, 海岸, 砂漠, 公園, 路地, 屋上, 田舎, 滝), abstract (宇宙, 銀河, 異次元, 夢, 天国, 地獄, 地下), genres (アンビエント, シューゲイザー, ドリームポップ, オーケストラ, クラシック, ゴスペル, テクノ, ハウス, トリップホップ, レゲエ, メタル, グランジ, ロック, パンク, ブルース, アコースティック削除, レトロゲーム, チップチューン, ヴェイパーウェイブ, チルホップ), through-barriers (壁越し, ドア越し, 窓越し, ガラス越し, カーテン越し, 厚い壁, 布越し, マイク越し), phone/radio (古い電話, 国際電話, 携帯電話, 公衆電話, インターホン, 短波, FMラジオ, アナウンス, 駅のアナウンス, 店内放送, ヘリコプター, パトカー, メガホン, 拡声器), vehicles (電車の中, 地下鉄, 飛行機), gear (チューブ, 真空管, アンプ, マーシャル, フェンダー, テープエコー, アナログエコー, ロランド, スペースエコー), eras (60年代, 70年代, 80年代, 90年代 with 70s/80s/90s aliases, 昭和, 平成初期), retro tech (VHS, ベータマックス, MD, ウォークマン, ボイスメモ, レコード, ヴァイナル, ファミコン, ゲームボーイ, 古いPC, 留守電, ファクス, ラジカセ, ブラウン管), and onomatopoeia (ピヨピヨ, キンキン, シャリシャリ, モコモコ, ザラザラ, ガリガリ, ガサガサ, プチプチ, パチパチ, ブチブチ, ぐるぐる, ふわふわ).
+
+### Changed
+- Moved ベル / 鈴 / 鐘 from delay to reverb. Bell sustain reads as residual reverb tail, not discrete echoes.
+- Moved 滝 from filter to reverb. Waterfall sound is dominated by spatial wash, not high-frequency loss.
+
 ## [0.3.2.0] - 2026-05-06
 
 ### Changed
