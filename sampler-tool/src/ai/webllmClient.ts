@@ -16,7 +16,11 @@
  * subsequent loads are instant. We only show "downloading…" UI on first init.
  */
 
-import { findPresetByKeyword, type PresetEntry } from '../effects/presetDictionary';
+import {
+  findPresetByKeyword,
+  findPresetBySubstring,
+  type PresetEntry,
+} from '../effects/presetDictionary';
 import type { EffectType, FxState } from '../effects/types';
 
 // Public state surface. Consumers (useWebLLM hook + Settings UI) drive UX off this.
@@ -298,7 +302,7 @@ export const inferPreset = async (
   if (!trimmed) return null;
 
   // 1. Exact dictionary hit short-circuits. Phase 2A path: zero latency, zero
-  //    LLM dependency. The LLM is for novel phrases not in the dictionary.
+  //    LLM dependency.
   const exact = findPresetByKeyword(trimmed);
   if (exact) {
     return {
@@ -307,6 +311,21 @@ export const inferPreset = async (
       param: exact.param,
       source: 'dictionary',
       note: exact.description,
+    };
+  }
+
+  // 1.5. Substring fallback. Catches natural phrasing like "ホールに響く感じ"
+  //      → matches "ホール" → reverb. Still instant; saves an LLM round-trip
+  //      for the common case where the user wraps a known keyword in
+  //      conversational filler ("〜っぽく", "〜な感じ", "〜にして").
+  const substring = findPresetBySubstring(trimmed);
+  if (substring) {
+    return {
+      type: substring.type,
+      wet: substring.wet,
+      param: substring.param,
+      source: 'dictionary',
+      note: substring.description,
     };
   }
 
@@ -388,17 +407,16 @@ const parsePreset = (raw: string): { type: EffectType; wet: number; param: numbe
 };
 
 const fallbackToDictionary = (vibe: string): VibeInferenceResult | null => {
-  // Future: Levenshtein over dictionary keys to handle typos. Phase 2B.1 keeps
-  // it strict — the LLM is the fuzzy-match layer, the dictionary is the
-  // exact-match layer. Returning null here surfaces "unmatchable" UX.
-  const exact = findPresetByKeyword(vibe);
-  if (!exact) return null;
+  // Try exact first (cheap), then substring. Substring catches phrases like
+  // "ホールに響く感じ" that the LLM may have garbled into invalid JSON.
+  const hit = findPresetByKeyword(vibe) ?? findPresetBySubstring(vibe);
+  if (!hit) return null;
   return {
-    type: exact.type,
-    wet: exact.wet,
-    param: exact.param,
+    type: hit.type,
+    wet: hit.wet,
+    param: hit.param,
     source: 'llm-fallback',
-    note: exact.description,
+    note: hit.description,
   };
 };
 

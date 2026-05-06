@@ -184,10 +184,34 @@ Chrome / Android Chrome で WebGPU 経由ローカル推論。完全無料 + プ
 
 #### 実装ロードマップ (Phase 2)
 
-1. **Phase 2A (1週間)**: 辞書 30件 + `EffectVibeChips` (chip 8-12件 horizontal scroll) + EffectPanel 統合。text input ナシ。DESIGN.md §9.15 仕様に沿う
-2. **Phase 2B (2週間、Phase 2A 完了後)**: 「他の言葉」chip + LCD 風 text input + WebLLM 統合 (Qwen 2.5 0.5B)、辞書残り 18件含む拡張カバレッジ、マッチ失敗時候補提示
-3. **Phase 2C (任意、半日)**: BYO key 入力欄 + Gemini Flash 直接呼出 (Settings 配下に隠す)
-4. **Phase 3**: 2027 まで再評価しない (TODO に再調査リマインダーのみ残す)
+1. **Phase 2A (1週間)** ✅ **完了** (v0.1.2.0): 辞書 30件 + `EffectVibeChips` (chip 12件 horizontal scroll) + EffectPanel 統合
+2. **Phase 2B.1** ✅ **完了** (v0.2.0.0–0.2.0.3): WebLLM (Qwen2-0.5B) オプトイン + Settings トグル + ダウンロード進捗 + CSP 解放 + adapter pre-check
+3. **Phase 2B.2** ✅ **完了** (v0.3.0.0–0.3.0.1): 「もっと」chip + LCD 入力 + WebLLM 推論 + grammar crash 修正
+4. **Phase 2B.3 (継続中)**: 辞書拡張 + UX 磨き込み (実機検証で発覚した自然語フレーズへの追従)
+5. **Phase 2C (保留)**: BYO key — DAW挫折者ペルソナ的に登録障壁が高すぎるため不採用方針
+6. **Phase 3**: 2027 まで再評価しない (Stable Audio Open Small がブラウザ実用域に達したら再開)
+
+##### 辞書拡張 — 継続タスク (Phase 2B.3)
+
+実機検証で「辞書未マッチ → LLM も『一致なし』」となるフレーズを継続的に追加する。
+
+**追加済 (2026-05-06):**
+- `ホール` `響く` `響き` `反響` `ライブハウス` → reverb (「ホールに響く感じ」対応)
+- `トンネル` → filter (「トンネルの中で叫ぶ感じ」対応)
+- `海中` → filter (`水中` の異字)
+
+**実装方針:**
+- 短い名詞・動詞断片を `extendedKeywords` に追加 (人気 12 件の chip ラインナップは触らない)
+- substring マッチ (`findPresetBySubstring`) で長文フレーズから断片を切り出すので、断片を入れるだけで「〜っぽく」「〜な感じ」を全て拾える
+- LLM 解釈と二重カバーで、キャッシュヒット率を上げる (substring が刺されば LLM 呼ばずに即応答)
+
+**追加候補 (実機 QA で随時):**
+- 部屋系: `スタジオ` `寝室` `お風呂` `地下室` → reverb の異なる広さ
+- 質感系: `ザラザラ` `ガラガラ` `クリスピー` → saturation / lofi
+- 時代/場面系: `90年代` `クラブ` `屋外` `森` → reverb / filter 組み合わせ
+- 楽器擬音系: `ドラム` `ベース` `ボーカル` → 機能追加が必要 (現状の単一 fx slot ではこれらを区別できない)
+
+ユーザーが LCD 入力で打って外したフレーズはログには残らない (オフライン設計)。**ユーザー報告 (Issue / PR コメント) 経由で追加するのが Phase 2B.3 のサイクル。**
 
 ---
 

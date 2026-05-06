@@ -4,6 +4,7 @@ import {
   extendedKeywords,
   presetDictionary,
   findPresetByKeyword,
+  findPresetBySubstring,
 } from './presetDictionary';
 import { EFFECT_TYPES, type EffectType } from './types';
 
@@ -70,8 +71,10 @@ describe('chipKeywords', () => {
 });
 
 describe('extendedKeywords', () => {
-  it('exposes exactly 18 entries (Phase 2B reserved set)', () => {
-    expect(extendedKeywords).toHaveLength(18);
+  it('exposes 25 entries (18 Phase 2B reserved + 7 real-user vocab additions)', () => {
+    // 18 original + 7 additions (ホール, 響く, 響き, 反響, ライブハウス,
+    // トンネル, 海中) for natural-phrase substring coverage.
+    expect(extendedKeywords).toHaveLength(25);
   });
 
   it('every entry has a valid EffectType and clamped wet/param', () => {
@@ -87,8 +90,8 @@ describe('extendedKeywords', () => {
 });
 
 describe('presetDictionary', () => {
-  it('is the union of chip and extended (30 entries)', () => {
-    expect(presetDictionary).toHaveLength(30);
+  it('is the union of chip and extended (37 entries after Phase 2B vocab additions)', () => {
+    expect(presetDictionary).toHaveLength(37);
     expect(presetDictionary.length).toBe(chipKeywords.length + extendedKeywords.length);
   });
 
@@ -128,5 +131,35 @@ describe('findPresetByKeyword', () => {
 
   it('trims surrounding whitespace before lookup', () => {
     expect(findPresetByKeyword('  水中  ')).toBeDefined();
+  });
+});
+
+describe('findPresetBySubstring', () => {
+  it('finds a preset whose keyword appears inside a longer phrase', () => {
+    // "ホールに響く感じ" should match either ホール or 響く. Longest-first
+    // wins so it picks ホール (4 chars).
+    const e = findPresetBySubstring('ホールに響く感じ');
+    expect(e).toBeDefined();
+    expect(e?.keyword).toBe('ホール');
+    expect(e?.type).toBe('reverb');
+  });
+
+  it('prefers the longest matching keyword over shorter ones', () => {
+    // "AMラジオの音" contains both "AMラジオ" (5 chars) and "ラジオ" (3).
+    // Without longest-first preference, the iteration order would decide.
+    const e = findPresetBySubstring('AMラジオの音');
+    expect(e?.keyword).toBe('AMラジオ');
+  });
+
+  it('returns undefined when no dictionary keyword is contained in the input', () => {
+    expect(findPresetBySubstring('完全に独自の音')).toBeUndefined();
+    expect(findPresetBySubstring('')).toBeUndefined();
+    expect(findPresetBySubstring('   ')).toBeUndefined();
+  });
+
+  it('handles natural reverb phrasing across the new vocabulary', () => {
+    expect(findPresetBySubstring('ライブハウスっぽく')?.type).toBe('reverb');
+    expect(findPresetBySubstring('反響しまくりで')?.type).toBe('reverb');
+    expect(findPresetBySubstring('トンネルの中で叫ぶ感じ')?.type).toBe('filter');
   });
 });
