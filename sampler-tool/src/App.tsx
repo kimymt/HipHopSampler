@@ -163,7 +163,9 @@ export default function App() {
 
   const handlePadClick = (padId: string) => {
     const sample = getSample(padId);
-    if (sample && sample.buffer) trigger(sample);
+    // Pass padId so the engine chokes any in-flight source for this pad and
+    // restarts from the head (re-tap = retrigger, not overlap).
+    if (sample && sample.buffer) trigger(sample, 0, padId);
     setSelectedPadId(padId);
     // Mobile: tap = play only; long-press opens the editor (handlePadLongPress).
     // Without this split every tap force-opened the BottomSheet over the grid.
@@ -244,7 +246,7 @@ export default function App() {
           samples={samples}
           selectedPadId={selectedPadId}
           onPadClick={handlePadClick}
-          onPadLongPress={handlePadLongPress}
+          onPadLongPress={isMobile ? handlePadLongPress : undefined}
           onPadFilePicked={handlePadFilePicked}
           micSupported={mic.supported}
           recordingPadId={mic.recordingPadId}

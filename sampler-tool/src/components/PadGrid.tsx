@@ -81,19 +81,41 @@ export const PadGrid = ({
   }, [onPadClick]);
 
   const handlePointerDown = (padId) => {
-    onPadClick(padId);
     setActivePads((prev) => new Set([...prev, padId]));
-    // Schedule long-press only if a long-press handler is wired.
     if (onPadLongPress) {
+      // Long-press wired (mobile): defer playback to pointer-up so a hold can
+      // open the editor without first triggering the sample. If pointer-up
+      // arrives before the long-press fires, that's a tap and we play then.
       longPressFiredRef.current = false;
       longPressTimerRef.current = setTimeout(() => {
         longPressFiredRef.current = true;
         onPadLongPress(padId);
       }, LONG_PRESS_MS);
+    } else {
+      // No long-press wired (desktop): keep immediate play for low latency.
+      onPadClick(padId);
     }
   };
 
   const handlePointerUp = (padId) => {
+    setActivePads((prev) => {
+      const next = new Set(prev);
+      next.delete(padId);
+      return next;
+    });
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+      // Tap completed before long-press threshold → play now.
+      if (!longPressFiredRef.current) {
+        onPadClick(padId);
+      }
+    }
+  };
+
+  // Pointer left the pad or was cancelled before release: don't play (treat
+  // as a slide-away / interrupted gesture). Just clear visual + timer state.
+  const handlePointerCancel = (padId) => {
     setActivePads((prev) => {
       const next = new Set(prev);
       next.delete(padId);
@@ -148,8 +170,8 @@ export const PadGrid = ({
           className={`pad ${isActive ? 'active' : ''} ${sample ? 'loaded' : 'empty'} ${isSelected ? 'selected' : ''} ${isRecording ? 'recording' : ''}`}
           onPointerDown={() => !isRecording && handlePointerDown(padId)}
           onPointerUp={() => handlePointerUp(padId)}
-          onPointerLeave={() => handlePointerUp(padId)}
-          onPointerCancel={() => handlePointerUp(padId)}
+          onPointerLeave={() => handlePointerCancel(padId)}
+          onPointerCancel={() => handlePointerCancel(padId)}
           title={isRecording ? 'Recording — tap mic to stop' : sample ? sample.name : '🎙 to record from mic, + to pick a file, or drop audio here'}
           style={{ touchAction: 'manipulation' }}
           role="button"

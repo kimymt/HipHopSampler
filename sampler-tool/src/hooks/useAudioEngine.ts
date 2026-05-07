@@ -10,6 +10,10 @@ import { useCallback, useRef } from 'react';
  */
 export const useAudioEngine = (initAudioContext, getDestination) => {
   const activeRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  // Per-pad source tracking for choke/retrigger: re-tapping a pad while it's
+  // playing should stop the previous source before starting the new one.
+  // Keyed by padId; only populated when trigger() is called with a padId.
+  const padSourcesRef = useRef<Map<string, Set<AudioBufferSourceNode>>>(new Map());
 
   // Resolve the per-call destination so changes to the master FX bus (mount /
   // unmount of effect, bypass toggle) take effect on subsequent triggers
@@ -20,9 +24,20 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
     return override ?? ctx.destination;
   }, [getDestination]);
 
-  const trigger = useCallback((sample, when = 0) => {
+  const trigger = useCallback((sample, when = 0, padId = null) => {
     const ctx = initAudioContext();
     if (!ctx || !sample || !sample.buffer) return null;
+
+    // Choke previous source(s) for this pad before starting a new one.
+    if (padId) {
+      const prev = padSourcesRef.current.get(padId);
+      if (prev) {
+        prev.forEach((src) => {
+          try { src.stop(); } catch { /* already ended */ }
+        });
+        prev.clear();
+      }
+    }
 
     const source = ctx.createBufferSource();
     source.buffer = sample.buffer;
@@ -45,7 +60,18 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
     source.start(startAt, offset, duration);
 
     activeRef.current.add(source);
-    source.onended = () => activeRef.current.delete(source);
+    if (padId) {
+      let set = padSourcesRef.current.get(padId);
+      if (!set) {
+        set = new Set();
+        padSourcesRef.current.set(padId, set);
+      }
+      set.add(source);
+    }
+    source.onended = () => {
+      activeRef.current.delete(source);
+      if (padId) padSourcesRef.current.get(padId)?.delete(source);
+    };
 
     return source;
   }, [initAudioContext]);
@@ -137,6 +163,7 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
       }
     });
     activeRef.current.clear();
+    padSourcesRef.current.clear();
   }, []);
 
   return { trigger, loopTrim, stopAll };
