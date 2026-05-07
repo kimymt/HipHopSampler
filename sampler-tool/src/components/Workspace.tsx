@@ -12,7 +12,7 @@ interface WorkspaceProps {
   samples: any;
   selectedPadId: string | null;
   onPadClick: (padId: string) => void;
-  onPadLongPress: (padId: string) => void;
+  onPadLongPress?: (padId: string) => void;
   onPadFilePicked: (padId: string, file: File) => void;
   micSupported: boolean;
   recordingPadId: string | null;
