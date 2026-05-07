@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1.2] - 2026-05-07
+
+### Fixed
+- **設定パネル「サンプル音源を探す」セクションの note はみ出し**: tablet/desktop 表示で SettingsSheet (max-width 460px) 内の 2-column grid が狭すぎて、各サイトの note (例: 「商用OK・改変OK・クレジット任意」) が ellipsis で大半切れていた。`flex-wrap: wrap` で名前と note を縦に積む形に変更し、`white-space: nowrap` を撤廃。すべての viewport で全説明が読めるように。CSS のみ、JSX 変更なし。
+
 ## [0.7.1.1] - 2026-05-07
 
 ### Changed

@@ -233,6 +233,7 @@
 
 .sample-source-list a {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 6px;
   padding: 6px 8px;
@@ -268,20 +269,15 @@
 }
 
 .sample-source-note {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   color: var(--ink-muted);
   font-size: 9px;
   letter-spacing: 0.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 @media (max-width: 480px) {
   .sample-source-list {
     grid-template-columns: 1fr;
-  }
-  .sample-source-note {
-    white-space: normal;
   }
 }
