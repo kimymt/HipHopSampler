@@ -37,8 +37,15 @@ export const PadGrid = ({
   // sample editor sheet (mobile UX: tap = play, hold = edit). Without this,
   // mobile users could not perform — every tap was force-opening the sheet
   // and covering the pad grid.
-  const longPressTimerRef = useRef(null);
-  const longPressFiredRef = useRef(false);
+  //
+  // State is keyed PER PAD because drum sampler users routinely touch two
+  // pads at once. Single-ref tracking (the previous version) broke under
+  // multi-touch: the second pointerdown overwrote the first pad's timer
+  // ref; the first pointerup then cleared the *second* pad's timer; the
+  // first pad's orphaned timer fired 350ms later and opened the editor for
+  // a pad the user thought they had merely tapped.
+  const longPressTimersRef = useRef(new Map());
+  const longPressFiredRef = useRef(new Set());
   const LONG_PRESS_MS = 350;
 
   useEffect(() => {
@@ -86,11 +93,16 @@ export const PadGrid = ({
       // Long-press wired (mobile): defer playback to pointer-up so a hold can
       // open the editor without first triggering the sample. If pointer-up
       // arrives before the long-press fires, that's a tap and we play then.
-      longPressFiredRef.current = false;
-      longPressTimerRef.current = setTimeout(() => {
-        longPressFiredRef.current = true;
+      longPressFiredRef.current.delete(padId);
+      // Defensive: if a stale timer for this pad somehow survived, drop it.
+      const stale = longPressTimersRef.current.get(padId);
+      if (stale) clearTimeout(stale);
+      const timer = setTimeout(() => {
+        longPressFiredRef.current.add(padId);
+        longPressTimersRef.current.delete(padId);
         onPadLongPress(padId);
       }, LONG_PRESS_MS);
+      longPressTimersRef.current.set(padId, timer);
     } else {
       // No long-press wired (desktop): keep immediate play for low latency.
       onPadClick(padId);
@@ -103,13 +115,15 @@ export const PadGrid = ({
       next.delete(padId);
       return next;
     });
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-      // Tap completed before long-press threshold → play now.
-      if (!longPressFiredRef.current) {
-        onPadClick(padId);
-      }
+    const timer = longPressTimersRef.current.get(padId);
+    if (timer) {
+      // Pad was held briefly: cancel its pending long-press and play.
+      clearTimeout(timer);
+      longPressTimersRef.current.delete(padId);
+      onPadClick(padId);
+    } else if (longPressFiredRef.current.has(padId)) {
+      // Long-press already fired (editor opened): consume the flag silently.
+      longPressFiredRef.current.delete(padId);
     }
   };
 
@@ -121,10 +135,12 @@ export const PadGrid = ({
       next.delete(padId);
       return next;
     });
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
+    const timer = longPressTimersRef.current.get(padId);
+    if (timer) {
+      clearTimeout(timer);
+      longPressTimersRef.current.delete(padId);
     }
+    longPressFiredRef.current.delete(padId);
   };
 
   const handleAddClick = (padId, e) => {
