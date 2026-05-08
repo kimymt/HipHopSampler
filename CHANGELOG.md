@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1.3] - 2026-05-08
+
+### Fixed
+- **小型端末で SettingsSheet の ✕ ボタンが押せなかった問題**: iPhone SE (375x667) 等、viewport 高 < シート content 高 (892px) の端末で、シートが上方向にはみ出し ✕ ボタンが画面外に押し出されて閉じられなかった (背景タップで閉じれるが UX 悪)。`.settings-card` に `max-height: 90vh; overflow-y: auto` を付与してシート内部スクロールを有効化し、`.settings-header` を `position: sticky; top: 0` に変更してタイトル + ✕ がスクロール中も常に上端に貼り付くように。CSS 約 10 行、JSX 変更なし。
+  - 計測 (iPhone SE): 修正前 closeBtn top = -132px (viewport 外) → 修正後 93.7px (visible)、最下端までスクロール時も 91.7px に貼り付き継続。
+
 ## [0.7.1.2] - 2026-05-07
 
 ### Fixed

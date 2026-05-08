@@ -17,6 +17,11 @@
   padding: 12px 18px 24px;
   width: 100%;
   max-width: 460px;
+  /* Cap at 90vh and scroll internally so the close button stays reachable
+     on small screens (iPhone SE etc.) where settings content (892px+) used
+     to overflow the top of the viewport. */
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 -10px 32px rgba(20, 16, 12, 0.45);
   color: var(--ink);
   animation: settings-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -43,8 +48,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
+  /* Sticky so the title + ✕ stay reachable while the body scrolls. Negative
+     horizontal/top margins extend the bg to the card edges; the matching
+     padding restores normal content spacing. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: -12px -18px 10px;
+  padding: 12px 18px 10px;
+  background: var(--bone-light);
   border-bottom: 1px solid var(--bone-darker);
 }
 
