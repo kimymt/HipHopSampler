@@ -7,7 +7,7 @@ interface UseSampleEditingArgs {
   updateSampleProperty: (padId: string, key: string, value: unknown) => void;
   loopTrim: (getSample: () => Sample | null | undefined) => unknown;
   stopAll: () => void;
-  removeSample: (padId: string) => void;
+  removeSample: (padId: string) => Promise<boolean>;
   onSampleRemoved?: () => void;
 }
 
@@ -62,11 +62,10 @@ export function useSampleEditing({
     [selectedPadId, updateSampleProperty],
   );
 
-  const handleRemove = useCallback(() => {
+  const handleRemove = useCallback(async () => {
     if (!selectedPadId) return;
     stopAll();
-    removeSample(selectedPadId);
-    onSampleRemoved?.();
+    if (await removeSample(selectedPadId)) onSampleRemoved?.();
   }, [selectedPadId, stopAll, removeSample, onSampleRemoved]);
 
   return { handleSetIn, handleSetOut, handleLoopStart, handleTrim, handleRemove };

@@ -1,3 +1,5 @@
+import { withDecodedAudio, AudioSafetyError, MAX_AUDIO_FILE_BYTES } from './audioSafety';
+
 /**
  * Reference Mode (Phase 3 of "songcraft guidance" effort).
  *
@@ -19,6 +21,7 @@ export type ImportError =
   | { kind: 'too-large'; sizeMB: number; limitMB: number }
   | { kind: 'unsupported-extension'; ext: string }
   | { kind: 'decode-failed'; underlying: string }
+  | { kind: 'unsafe-audio'; message: string }
   | { kind: 'empty' }
   | { kind: 'no-audio-context' };
 
@@ -32,8 +35,7 @@ export type ImportResult =
   | { ok: true; data: ImportSuccess }
   | { ok: false; error: ImportError };
 
-/** Hard cap. Refusing 100MB+ files protects against memory blow-ups on mobile. */
-const MAX_FILE_BYTES = 100 * 1024 * 1024;
+const MAX_FILE_BYTES = MAX_AUDIO_FILE_BYTES;
 
 /** Codecs we will *attempt* to decode. The Web Audio decoder may still
  * refuse formats outside this list (codec-dependent), but if the file
@@ -53,6 +55,7 @@ const getExtension = (fileName: string): string => {
 export const importReferenceFile = async (
   file: File,
   ctx: AudioContext,
+  options: { isCurrent?: () => boolean; onDecoded?: (buffer: AudioBuffer) => void } = {},
 ): Promise<ImportResult> => {
   if (!ctx) {
     return { ok: false, error: { kind: 'no-audio-context' } };
@@ -78,37 +81,19 @@ export const importReferenceFile = async (
     return { ok: false, error: { kind: 'unsupported-extension', ext: ext || 'unknown' } };
   }
 
-  let arrayBuffer: ArrayBuffer;
   try {
-    arrayBuffer = await file.arrayBuffer();
+    const data = await withDecodedAudio(file, ctx, (buffer) => {
+      options.onDecoded?.(buffer);
+      return { buffer, fileName: file.name, durationSec: buffer.duration };
+    }, options.isCurrent);
+    if (!data) return { ok: false, error: { kind: 'decode-failed', underlying: 'cancelled' } };
+    return { ok: true, data };
   } catch (err) {
     return {
       ok: false,
-      error: { kind: 'decode-failed', underlying: err instanceof Error ? err.message : 'read failed' },
-    };
-  }
-
-  try {
-    // decodeAudioData is the single chokepoint. DRM-protected files (e.g. a
-    // file ripped with DRM intact, Apple Music protected M4A) throw here.
-    // We do NOT attempt to bypass — caller surfaces a "try a different file"
-    // message. This is what makes the feature legally defensible.
-    const buffer = await ctx.decodeAudioData(arrayBuffer);
-    return {
-      ok: true,
-      data: {
-        buffer,
-        fileName: file.name,
-        durationSec: buffer.duration,
-      },
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      error: {
-        kind: 'decode-failed',
-        underlying: err instanceof Error ? err.message : String(err),
-      },
+      error: err instanceof AudioSafetyError
+        ? { kind: 'unsafe-audio', message: err.message }
+        : { kind: 'decode-failed', underlying: err instanceof Error ? err.message : String(err) },
     };
   }
 };
@@ -126,6 +111,8 @@ export const errorMessage = (error: ImportError): string => {
       return `「.${error.ext}」 形式は対応していません。MP3 / WAV / OGG / M4A / FLAC をお試しください。`;
     case 'decode-failed':
       return 'このファイルは解析できません。著作権保護 (DRM) がかかっているか、破損している可能性があります。別のファイルでお試しください。';
+    case 'unsafe-audio':
+      return error.message;
     case 'empty':
       return '空のファイルです。中身のあるオーディオファイルを選んでください。';
     case 'no-audio-context':

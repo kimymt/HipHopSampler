@@ -44,177 +44,149 @@ export interface UseMicRecorderReturn {
   clearError: () => void;
 }
 
+interface RecordingSession {
+  padId: string;
+  stream: MediaStream | null;
+  recorder: MediaRecorder | null;
+  chunks: Blob[];
+  tick: number | null;
+  autoStop: number | null;
+}
+
+function releaseCapture(session: RecordingSession) {
+  if (session.tick !== null) window.clearInterval(session.tick);
+  if (session.autoStop !== null) window.clearTimeout(session.autoStop);
+  session.tick = session.autoStop = null;
+  session.stream?.getTracks().forEach((track) => track.stop());
+  session.stream = null;
+}
+
 export function useMicRecorder({ onRecorded }: UseMicRecorderOptions): UseMicRecorderReturn {
   const supported =
     typeof navigator !== 'undefined' &&
     !!navigator.mediaDevices?.getUserMedia &&
     typeof MediaRecorder !== 'undefined';
-
   const [recordingPadId, setRecordingPadId] = useState<string | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [error, setError] = useState<MicRecorderError | null>(null);
-
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const startedAtRef = useRef<number>(0);
-  const tickRef = useRef<number | null>(null);
-  const autoStopRef = useRef<number | null>(null);
-  const padIdRef = useRef<string | null>(null);
+  const sessionRef = useRef<RecordingSession | null>(null);
+  const mountedRef = useRef(true);
   const onRecordedRef = useRef(onRecorded);
+  useEffect(() => { onRecordedRef.current = onRecorded; }, [onRecorded]);
 
-  // Keep callback ref fresh without re-subscribing handlers.
-  useEffect(() => {
-    onRecordedRef.current = onRecorded;
-  }, [onRecorded]);
-
-  const cleanup = useCallback(() => {
-    if (tickRef.current !== null) {
-      window.clearInterval(tickRef.current);
-      tickRef.current = null;
+  const cleanup = useCallback((session: RecordingSession) => {
+    releaseCapture(session);
+    if (sessionRef.current !== session) return;
+    sessionRef.current = null;
+    if (mountedRef.current) {
+      setRecordingPadId(null);
+      setElapsedMs(0);
     }
-    if (autoStopRef.current !== null) {
-      window.clearTimeout(autoStopRef.current);
-      autoStopRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    recorderRef.current = null;
-    chunksRef.current = [];
-    padIdRef.current = null;
-    setRecordingPadId(null);
-    setElapsedMs(0);
   }, []);
 
-  const startRecording = useCallback(
-    async (padId: string) => {
-      if (!supported) {
-        setError('unsupported');
-        return;
-      }
-      if (recorderRef.current) {
-        // Already recording — ignore.
-        return;
-      }
-
-      setError(null);
-
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        });
-      } catch (err) {
-        const name = (err as DOMException)?.name;
-        if (name === 'NotAllowedError' || name === 'SecurityError') {
-          setError('permission-denied');
-        } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
-          setError('no-device');
-        } else {
-          setError('recorder-failed');
-        }
-        return;
-      }
-
-      const mime = pickMimeType();
-      let recorder: MediaRecorder;
-      try {
-        recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-      } catch {
-        stream.getTracks().forEach((t) => t.stop());
-        setError('recorder-failed');
-        return;
-      }
-
-      streamRef.current = stream;
-      recorderRef.current = recorder;
-      chunksRef.current = [];
-      padIdRef.current = padId;
-      startedAtRef.current = performance.now();
-
-      recorder.addEventListener('dataavailable', (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-      });
-
-      recorder.addEventListener('stop', () => {
-        const pad = padIdRef.current;
-        const chunks = chunksRef.current;
-        const blob = new Blob(chunks, { type: recorder.mimeType || mime || 'audio/webm' });
-        cleanup();
-        if (pad && blob.size > 0) {
-          const ext = extensionFor(blob.type);
-          const file = new File([blob], `mic-${Date.now()}.${ext}`, { type: blob.type });
-          onRecordedRef.current(pad, file);
-        }
-      });
-
-      recorder.addEventListener('error', () => {
-        setError('recorder-failed');
-        cleanup();
-      });
-
-      try {
-        recorder.start();
-      } catch {
-        cleanup();
-        setError('recorder-failed');
-        return;
-      }
-
-      setRecordingPadId(padId);
-      setElapsedMs(0);
-
-      tickRef.current = window.setInterval(() => {
-        setElapsedMs(performance.now() - startedAtRef.current);
-      }, 100);
-
-      autoStopRef.current = window.setTimeout(() => {
-        if (recorderRef.current?.state === 'recording') {
-          recorderRef.current.stop();
-        }
-      }, MAX_DURATION_MS);
-    },
-    [supported, cleanup],
-  );
-
   const stopRecording = useCallback(() => {
-    const r = recorderRef.current;
-    if (r && r.state === 'recording') {
-      r.stop(); // 'stop' event handler calls cleanup + onRecorded
-    } else {
-      cleanup();
+    const session = sessionRef.current;
+    if (!session) return;
+    if (!session.recorder) {
+      // Invalidate a pending permission request; its eventual stream is discarded.
+      cleanup(session);
+      return;
+    }
+    try {
+      if (session.recorder.state === 'recording') session.recorder.stop();
+    } catch {
+      cleanup(session);
+      setError('recorder-failed');
+    } finally {
+      // Do not wait for the asynchronous stop event to release the microphone.
+      // Retain session ownership until that event delivers the final audio chunk.
+      releaseCapture(session);
     }
   }, [cleanup]);
 
-  const clearError = useCallback(() => setError(null), []);
-
-  // Stop any active recording on unmount.
-  useEffect(() => {
-    return () => {
-      if (recorderRef.current?.state === 'recording') {
-        try {
-          recorderRef.current.stop();
-        } catch {
-          /* ignore */
-        }
-      }
-      cleanup();
+  const startRecording = useCallback(async (padId: string) => {
+    if (!mountedRef.current) return;
+    if (!supported) { setError('unsupported'); return; }
+    if (sessionRef.current) return;
+    const session: RecordingSession = {
+      padId, stream: null, recorder: null, chunks: [], tick: null, autoStop: null,
     };
-  }, [cleanup]);
+    // Reserve synchronously, before permission can yield to another start call.
+    sessionRef.current = session;
+    setError(null);
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+    } catch (err) {
+      if (sessionRef.current !== session) return;
+      cleanup(session);
+      const name = (err as DOMException)?.name;
+      setError(name === 'NotAllowedError' || name === 'SecurityError'
+        ? 'permission-denied'
+        : name === 'NotFoundError' || name === 'OverconstrainedError'
+          ? 'no-device' : 'recorder-failed');
+      return;
+    }
+    if (sessionRef.current !== session || !mountedRef.current) {
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    }
+    session.stream = stream;
+    try {
+      const mime = pickMimeType();
+      const recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+      session.recorder = recorder;
+      recorder.addEventListener('dataavailable', (event) => {
+        if (sessionRef.current === session && event.data.size > 0) session.chunks.push(event.data);
+      });
+      recorder.addEventListener('stop', () => {
+        if (sessionRef.current !== session) return;
+        const blob = new Blob(session.chunks, { type: recorder.mimeType || mime || 'audio/webm' });
+        cleanup(session);
+        if (blob.size > 0) {
+          onRecordedRef.current(session.padId, new File([blob], `mic-${Date.now()}.${extensionFor(blob.type)}`, { type: blob.type }));
+        }
+      });
+      recorder.addEventListener('error', () => {
+        if (sessionRef.current !== session) return;
+        cleanup(session);
+        setError('recorder-failed');
+      });
+      recorder.start();
+      setRecordingPadId(padId);
+      setElapsedMs(0);
+      const startedAt = performance.now();
+      session.tick = window.setInterval(() => {
+        if (sessionRef.current === session) setElapsedMs(performance.now() - startedAt);
+      }, 100);
+      session.autoStop = window.setTimeout(() => {
+        if (sessionRef.current === session) stopRecording();
+      }, MAX_DURATION_MS);
+    } catch {
+      cleanup(session);
+      setError('recorder-failed');
+    }
+  }, [supported, cleanup, stopRecording]);
 
-  return {
-    supported,
-    recordingPadId,
-    elapsedMs,
-    error,
-    startRecording,
-    stopRecording,
-    clearError,
-  };
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const session = sessionRef.current;
+      if (!session) return;
+      // Invalidate ownership before stopping, so queued events cannot deliver files.
+      sessionRef.current = null;
+      try {
+        if (session.recorder?.state === 'recording') session.recorder.stop();
+      } catch {
+        // Track release must still run if the recorder has already failed.
+      } finally {
+        releaseCapture(session);
+      }
+    };
+  }, []);
+  const clearError = useCallback(() => setError(null), []);
+  return { supported, recordingPadId, elapsedMs, error, startRecording, stopRecording, clearError };
 }

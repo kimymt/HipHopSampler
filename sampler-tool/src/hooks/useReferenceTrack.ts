@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { retainAudio, releaseAudio } from '../utils/audioSafety';
 import {
   importReferenceFile,
   errorMessage,
@@ -35,9 +36,18 @@ export type ReferenceState =
 
 export const useReferenceTrack = ({ initAudioContext }: Args) => {
   const [state, setState] = useState<ReferenceState>({ status: 'idle' });
+  const generation = useRef(0);
+  const owner = useRef({});
+  useEffect(() => {
+    const memoryOwner = owner.current;
+    return () => { generation.current++; releaseAudio(memoryOwner); };
+  }, []);
 
   const importFile = useCallback(
     async (file: File) => {
+      const request = ++generation.current;
+      const isCurrent = () => generation.current === request;
+      releaseAudio(owner.current);
       const ctx = initAudioContext();
       if (!ctx) {
         setState({
@@ -47,7 +57,10 @@ export const useReferenceTrack = ({ initAudioContext }: Args) => {
         return;
       }
       setState({ status: 'importing' });
-      const result = await importReferenceFile(file, ctx);
+      const result = await importReferenceFile(file, ctx, {
+        isCurrent, onDecoded: (buffer) => retainAudio(owner.current, [buffer]),
+      });
+      if (!isCurrent()) return;
       if (result.ok !== true) {
         setState({ status: 'error', message: errorMessage(result.error) });
         return;
@@ -58,8 +71,10 @@ export const useReferenceTrack = ({ initAudioContext }: Args) => {
 
       try {
         const analysis = await analyzeReferenceTrack(track.buffer);
-        setState({ status: 'ready', track, analysis });
+        if (isCurrent()) setState({ status: 'ready', track, analysis });
       } catch (err) {
+        if (!isCurrent()) return;
+        releaseAudio(owner.current);
         setState({
           status: 'error',
           message: `解析中にエラーが発生しました: ${err instanceof Error ? err.message : String(err)}`,
@@ -71,6 +86,8 @@ export const useReferenceTrack = ({ initAudioContext }: Args) => {
 
   /** Clear the imported track + analysis. Drops AudioBuffer ref for GC. */
   const clear = useCallback(() => {
+    generation.current++;
+    releaseAudio(owner.current);
     setState({ status: 'idle' });
   }, []);
 
