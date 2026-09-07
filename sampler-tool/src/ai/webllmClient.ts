@@ -22,6 +22,8 @@ import {
   type PresetEntry,
 } from '../effects/presetDictionary';
 import type { EffectType, FxState } from '../effects/types';
+import { WEBLLM_APP_CONFIG, WEBLLM_MODEL_ID } from './modelConfig';
+export { WEBLLM_MODEL_ID } from './modelConfig';
 
 // Public state surface. Consumers (useWebLLM hook + Settings UI) drive UX off this.
 export type WebLLMState =
@@ -49,9 +51,6 @@ export interface VibeInferenceResult {
   /** Optional human-readable note (e.g. dictionary description). */
   note?: string;
 }
-
-/** Single Qwen variant we ship; pinning here keeps bundle/install reproducible. */
-export const WEBLLM_MODEL_ID = 'Qwen2-0.5B-Instruct-q4f16_1-MLC';
 
 const LS_KEY_OPT_IN = 'sampler.ai.webllm.optIn';
 
@@ -189,6 +188,7 @@ export const loadWebLLM = async (
     // 3. Late import so the library never enters the main chunk.
     const webllm = await import('@mlc-ai/web-llm');
     const enginePromiseInner = webllm.CreateMLCEngine(WEBLLM_MODEL_ID, {
+      appConfig: WEBLLM_APP_CONFIG,
       initProgressCallback: (report) => {
         lastProgressAt = Date.now();
         // report: { progress: 0..1, text: string, timeElapsed: number }
@@ -232,7 +232,7 @@ export const loadWebLLM = async (
 export const isWebLLMCached = async (): Promise<boolean> => {
   try {
     const webllm = await import('@mlc-ai/web-llm');
-    return await webllm.hasModelInCache(WEBLLM_MODEL_ID);
+    return await webllm.hasModelInCache(WEBLLM_MODEL_ID, WEBLLM_APP_CONFIG);
   } catch {
     return false;
   }

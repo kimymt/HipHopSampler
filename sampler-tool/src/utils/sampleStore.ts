@@ -57,14 +57,6 @@ const promisifyReq = <T>(req: IDBRequest<T>): Promise<T> =>
 export const generateSourceId = (): string =>
   `src-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-/** Write the raw ArrayBuffer for a source. Idempotent on sourceId. */
-export const saveAudio = async (sourceId: string, arrayBuffer: ArrayBuffer, mimeType: string): Promise<void> => {
-  const db = await openDB();
-  const tx = db.transaction(AUDIO_STORE, 'readwrite');
-  tx.objectStore(AUDIO_STORE).put({ sourceId, arrayBuffer, mimeType, savedAt: Date.now() });
-  return promisifyTx(tx);
-};
-
 /** Read raw ArrayBuffer + mime by sourceId. Returns undefined if not found. */
 export const loadAudio = async (sourceId: string): Promise<AudioStoreEntry | undefined> => {
   const db = await openDB();
@@ -72,37 +64,77 @@ export const loadAudio = async (sourceId: string): Promise<AudioStoreEntry | und
   return promisifyReq<AudioStoreEntry | undefined>(tx.objectStore(AUDIO_STORE).get(sourceId));
 };
 
-/** Save pad metadata. Caller decides what to store. */
-export const savePad = async (padId: string, data: Omit<PadMetadata, 'padId'>): Promise<void> => {
-  const db = await openDB();
-  const tx = db.transaction(PADS_STORE, 'readwrite');
-  tx.objectStore(PADS_STORE).put({ padId, ...data, savedAt: Date.now() });
-  return promisifyTx(tx);
+/** Collect orphan bytes inside the SAME transaction as their reference changes. */
+const collectInTransaction = (tx: IDBTransaction) => {
+  const pads = tx.objectStore(PADS_STORE).getAll();
+  pads.onsuccess = () => {
+    const references = new Set((pads.result as PadMetadata[]).map((p) => p.sourceId));
+    const cursor = tx.objectStore(AUDIO_STORE).openKeyCursor();
+    cursor.onsuccess = () => {
+      const entry = cursor.result;
+      if (!entry) return;
+      if (!references.has(entry.primaryKey as string)) tx.objectStore(AUDIO_STORE).delete(entry.primaryKey);
+      entry.continue();
+    };
+  };
 };
 
-/** Patch pad metadata. No-op if pad doesn't exist. */
+/** Audio and references either commit together or are both rolled back. */
+export const saveSample = async (
+  padId: string, data: Omit<PadMetadata, 'padId'>, arrayBuffer: ArrayBuffer, mimeType: string,
+): Promise<void> => {
+  const db = await openDB();
+  const tx = db.transaction([AUDIO_STORE, PADS_STORE], 'readwrite');
+  const done = promisifyTx(tx);
+  tx.objectStore(AUDIO_STORE).put({ sourceId: data.sourceId, arrayBuffer, mimeType, savedAt: Date.now() });
+  tx.objectStore(PADS_STORE).put({ ...data, padId, savedAt: Date.now() });
+  collectInTransaction(tx);
+  return done;
+};
+
+export const savePad = (padId: string, data: Omit<PadMetadata, 'padId'>): Promise<void> =>
+  savePads([{ padId, data }]);
+
+/** Patch only an existing pad, never recreate one after deletion. */
 export const updatePad = async (padId: string, partial: Partial<PadMetadata>): Promise<void> => {
   const db = await openDB();
   const tx = db.transaction(PADS_STORE, 'readwrite');
+  const done = promisifyTx(tx);
   const store = tx.objectStore(PADS_STORE);
-  const existing = await promisifyReq<PadMetadata | undefined>(store.get(padId));
-  if (existing) {
-    store.put({ ...existing, ...partial, savedAt: Date.now() });
-  }
-  return promisifyTx(tx);
+  const request = store.get(padId);
+  request.onsuccess = () => {
+    if (request.result) store.put({ ...request.result, ...partial, padId, sourceId: request.result.sourceId, savedAt: Date.now() });
+  };
+  return done;
 };
 
-/** Atomic multi-pad write. */
+/** Atomic chop/replacement. Reject a stale reference whose audio was deleted. */
 export const savePads = async (
   entries: { padId: string; data: Omit<PadMetadata, 'padId'> }[],
 ): Promise<void> => {
   const db = await openDB();
-  const tx = db.transaction(PADS_STORE, 'readwrite');
-  const store = tx.objectStore(PADS_STORE);
-  entries.forEach(({ padId, data }) => {
-    store.put({ padId, ...data, savedAt: Date.now() });
-  });
-  return promisifyTx(tx);
+  const tx = db.transaction([AUDIO_STORE, PADS_STORE], 'readwrite');
+  const done = promisifyTx(tx);
+  let remaining = entries.length;
+  if (!remaining) return done;
+  for (const { padId, data } of entries) {
+    const request = tx.objectStore(AUDIO_STORE).getKey(data.sourceId);
+    request.onsuccess = () => {
+      if (request.result === undefined) { tx.abort(); return; }
+      tx.objectStore(PADS_STORE).put({ ...data, padId, savedAt: Date.now() });
+      if (--remaining === 0) collectInTransaction(tx);
+    };
+  }
+  return done;
+};
+
+/** Migration cleanup: recover orphan bytes left by older app versions. */
+export const collectOrphanAudio = async (): Promise<void> => {
+  const db = await openDB();
+  const tx = db.transaction([AUDIO_STORE, PADS_STORE], 'readwrite');
+  const done = promisifyTx(tx);
+  collectInTransaction(tx);
+  return done;
 };
 
 /** Read all pad metadata. */
@@ -112,33 +144,14 @@ export const loadAllPads = async (): Promise<PadMetadata[]> => {
   return promisifyReq<PadMetadata[]>(tx.objectStore(PADS_STORE).getAll());
 };
 
-/** Remove a pad and (if no other pad uses its source) garbage-collect the audio. */
+/** Deletion and audio GC are atomic, also across browser tabs. */
 export const removePad = async (padId: string): Promise<void> => {
   const db = await openDB();
-  // Read pad first to know the sourceId
-  const readTx = db.transaction(PADS_STORE, 'readonly');
-  const pad = await promisifyReq<PadMetadata | undefined>(readTx.objectStore(PADS_STORE).get(padId));
-  await promisifyTx(readTx);
-  if (!pad) return;
-
-  const sourceId = pad.sourceId;
-
-  // Delete the pad
-  const tx = db.transaction(PADS_STORE, 'readwrite');
+  const tx = db.transaction([AUDIO_STORE, PADS_STORE], 'readwrite');
+  const done = promisifyTx(tx);
   tx.objectStore(PADS_STORE).delete(padId);
-  await promisifyTx(tx);
-
-  // Check if any other pad still references this sourceId
-  if (!sourceId) return;
-  const checkTx = db.transaction(PADS_STORE, 'readonly');
-  const remaining = await promisifyReq<PadMetadata[]>(checkTx.objectStore(PADS_STORE).getAll());
-  await promisifyTx(checkTx);
-  const stillReferenced = remaining.some((p) => p.sourceId === sourceId);
-  if (!stillReferenced) {
-    const cleanupTx = db.transaction(AUDIO_STORE, 'readwrite');
-    cleanupTx.objectStore(AUDIO_STORE).delete(sourceId);
-    await promisifyTx(cleanupTx);
-  }
+  collectInTransaction(tx);
+  return done;
 };
 
 /** Wipe everything. */

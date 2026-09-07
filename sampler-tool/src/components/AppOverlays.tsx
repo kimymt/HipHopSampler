@@ -46,6 +46,8 @@ interface AppOverlaysProps {
   audioInit: boolean;
   onResumeAudio: () => void;
 
+  restoreFailures: string[];
+  onRemoveFailedSamples: () => Promise<unknown>;
   micErrorMessage: string | null;
   onMicErrorClear: () => void;
 }
@@ -150,9 +152,16 @@ export function AppOverlays(props: AppOverlaysProps) {
         isInitialized={audioInit}
         onResume={onResumeAudio}
       />
-      {micErrorMessage && (
-        <div className="mic-error-toast" role="alert" onClick={onMicErrorClear}>
-          {micErrorMessage}
+      {(props.restoreFailures.length > 0 || micErrorMessage) && (
+        <div className="mic-error-toast" role="alert">
+          {props.restoreFailures.length > 0 && (
+            <>
+              <p>一部の音声を復元できませんでした。パッド {props.restoreFailures.map(padIdToDisplayString).join(', ')} の保存データは残っています。短い音声に差し替えるか、削除してください。</p>
+              <button type="button" onClick={() => void props.onRemoveFailedSamples()}>読み込めなかった音声を削除</button>
+            </>
+          )}
+          {micErrorMessage && <p>{micErrorMessage}</p>}
+          {micErrorMessage && <button type="button" onClick={onMicErrorClear}>閉じる</button>}
         </div>
       )}
     </>

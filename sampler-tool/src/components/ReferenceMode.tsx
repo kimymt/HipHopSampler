@@ -166,7 +166,7 @@ export const ReferenceMode: React.FC<Props> = ({ state, onImport, onClear, onClo
                 「どこで何を叩くか」のお手本になります。
               </p>
               <p className="reference-mode-empty-detail">
-                MP3 / WAV / OGG / M4A / FLAC に対応・100MB まで・著作権保護
+                MP3 / WAV / OGG / M4A / FLAC に対応・32MB・5分まで・著作権保護
                 (DRM) のあるファイルは解析できません
               </p>
               <button

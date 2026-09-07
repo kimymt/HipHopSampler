@@ -47,6 +47,10 @@ export default function App() {
     updateSampleProperty,
     updateMany,
     removeSample,
+    error: sampleError,
+    clearError: clearSampleError,
+    restoreFailures,
+    removeFailedSamples,
   } = usePersistedSamples(initAudioContext);
   const starterPack = useStarterPack({
     initAudioContext,
@@ -304,8 +308,10 @@ export default function App() {
         contextState={contextState}
         audioInit={audioInit}
         onResumeAudio={() => resumeContext()}
-        micErrorMessage={micErrorMessage}
-        onMicErrorClear={() => mic.clearError()}
+        micErrorMessage={sampleError || micErrorMessage}
+        onMicErrorClear={() => { clearSampleError(); mic.clearError(); }}
+        restoreFailures={restoreFailures}
+        onRemoveFailedSamples={removeFailedSamples}
       />
     </FileDropZone>
   );

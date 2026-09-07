@@ -1,4 +1,5 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { retainAudio, releaseAudio } from '../utils/audioSafety';
 
 /**
  * Tracks every BufferSource we schedule so we can stop them all on demand
@@ -59,6 +60,7 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
     const startAt = when || ctx.currentTime;
     source.start(startAt, offset, duration);
 
+    retainAudio(source, [sample.buffer]);
     activeRef.current.add(source);
     if (padId) {
       let set = padSourcesRef.current.get(padId);
@@ -69,6 +71,8 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
       set.add(source);
     }
     source.onended = () => {
+      releaseAudio(source);
+      source.disconnect(); gain.disconnect(); panner.disconnect();
       activeRef.current.delete(source);
       if (padId) padSourcesRef.current.get(padId)?.delete(source);
     };
@@ -106,6 +110,7 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
     const startedAt = ctx.currentTime;
     const initialOffset = source.loopStart;
     source.start(0, initialOffset);
+    retainAudio(source, [sample.buffer]);
     activeRef.current.add(source);
 
     let stopped = false;
@@ -151,6 +156,13 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
       activeRef.current.delete(source);
     };
 
+    source.onended = () => {
+      stopped = true;
+      clearInterval(watcher);
+      releaseAudio(source);
+      source.disconnect(); gain.disconnect(); panner.disconnect();
+      activeRef.current.delete(source);
+    };
     return { getPosition, stop };
   }, [initAudioContext]);
 
@@ -165,6 +177,8 @@ export const useAudioEngine = (initAudioContext, getDestination) => {
     activeRef.current.clear();
     padSourcesRef.current.clear();
   }, []);
+
+  useEffect(() => () => stopAll(), [stopAll]);
 
   return { trigger, loopTrim, stopAll };
 };

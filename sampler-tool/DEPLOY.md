@@ -36,7 +36,7 @@
 | Production branch | `main` |
 | **Framework preset** | **`None`** ← Vite は preset 不要、手動指定 |
 | **Root directory** | **`sampler-tool`** ← 重要 (リポジトリのサブフォルダ) |
-| Build command | `npm install && npm run build` |
+| Build command | `npm ci && npm run build` |
 | Build output directory | `dist` |
 
 > Cloudflare Pages の Framework preset リストに「Vite」は無い。Vite は単なるビルドツールでフレームワークではないため。`None` を選んで Build command と Output directory を手動入力すれば同じ結果。<br>(SvelteKit / VitePress 等の preset は、内部で Vite を使う「フレームワーク」だから出ている)
@@ -108,7 +108,7 @@ HTTP の絶対 URL がコード内に残っていないか確認。本プロジ�
 
 ### ビルド失敗
 - Root directory 設定を `sampler-tool` にしているか確認
-- node 20+ で動作確認 (Cloudflare Pages のデフォルトは node 22 なので大丈夫)
+- Node.js 24.2.0で動作確認。ビルド・lintを含む依存関係には20.19以上の20系、22.13以上の22系、または24以上が必要。Cloudflare Pagesのビルド環境でも対応バージョンを指定する。
 
 ### iOS インストール時に動かない
 - 必ず HTTPS でアクセスしているか (Pages はデフォルト HTTPS)
