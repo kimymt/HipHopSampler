@@ -104,7 +104,7 @@ GitHub の `kimymt/HipHopSampler` ページ右上 **Fork** ボタンから自分
 | Production branch | `main` |
 | **Framework preset** | **`None`** |
 | **Root directory** | **`sampler-tool`** ← 必須 |
-| Build command | `npm install && npm run build` |
+| Build command | `npm ci && npm run build` |
 | Build output directory | `dist` |
 
 > ⚠ Cloudflare の preset 一覧に「Vite」は無いので **None** を選び、Build command と Output directory を手動で入力します。
@@ -113,6 +113,8 @@ GitHub の `kimymt/HipHopSampler` ページ右上 **Fork** ボタンから自分
 **Save and Deploy** をクリック。初回ビルドはおよそ1分で完了し、`https://<project-name>.pages.dev` にアクセスできるようになります。
 
 ---
+
+セキュリティ修正の内容・入力制限・検証結果は [SECURITY-REMEDIATION.md](sampler-tool/SECURITY-REMEDIATION.md) を参照してください。
 
 ## ライセンス
 
