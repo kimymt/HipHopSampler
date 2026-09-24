@@ -65,7 +65,7 @@
 
 ### main にマージ → 本番デプロイ
 
-`/ship` または手動マージで PR を main にマージすると、Cloudflare Pages が自動的に本番ビルド + デプロイ (1分以内)。
+PR を main にマージすると、Cloudflare Pages が自動的に本番ビルド + デプロイ (1分以内)。
 
 ### 機能ブランチ → preview URL
 

@@ -89,16 +89,13 @@
 
 ## 📂 セッション間で参照すべきファイル
 
-新セッション開始時、必ず以下を確認 (`/context-restore` 相当):
+新セッション開始時、必ず以下を確認:
 
 | ファイル | 用途 |
 |---------|------|
 | `sampler-tool/DESIGN.md` | デザインの判断基準 |
 | `sampler-tool/ROADMAP.md` | このファイル — 進捗 + 次タスク |
 | `sampler-tool/MANUAL.md` | ユーザー向け操作マニュアル |
-| `~/.claude/projects/-Users-likemike-Documents-gstack/memory/sampler_persona.md` | ペルソナ (DAW挫折者) |
-| `~/.gstack/projects/cool-proskuriakova-258e51/ceo-plans/pwa-phase3-mobile.md` | Phase 3 計画書 (参考) |
-| `~/.gstack/projects/cool-proskuriakova-258e51/designs/phase3-mobile-20260504/mockups.html` | Phase 3 承認モックアップ |
 | GitHub: https://github.com/kimymt/HipHopSampler | リポジトリ + マージ済 PR 履歴 |
 
 ---
@@ -126,7 +123,7 @@ PWA 機能としては完成。ここから先は3方向に分岐:
 
 ### C. 実機 QA + リリース
 - 実機 (iPhone/Android) で全機能テスト
-- /qa スキルで体系的にバグ拾い
+- 実機とブラウザで体系的にバグ拾い
 - 初リリース (v1.0.0) タグ + CHANGELOG
 - デプロイ (Vercel/Netlify/GitHub Pages)
 

@@ -232,7 +232,7 @@ The persona reported "サンプル音源を探すのがすでに大変" — gett
 ### Added
 - Unit tests for `presetDictionary` (12 contract assertions: chip count, type coverage, lookup correctness, case-insensitivity, no-duplicates).
 - Component tests for `EffectVibeChips` (17 tests: rendering, chip-tap with motion, prefers-reduced-motion path, manual interaction clears active state).
-- Manual test procedure for verifying `prefers-reduced-motion` on real iPad / iPhone / Android, archived in `.gstack/qa-reports/reduce-motion-manual-test.md`.
+- Manual test procedure for verifying `prefers-reduced-motion` on real iPad / iPhone / Android.
 
 Test count: 75 → 104 (+29).
 
