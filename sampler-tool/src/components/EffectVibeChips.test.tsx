@@ -46,7 +46,7 @@ const StatefulChips: React.FC<{
  *   - Manual fx drift (wet/param diverges by > 0.05) → active chip clears
  *   - aria-pressed reflects active state
  *
- * What we don't verify (covered by manual /qa):
+ * What we don't verify (covered by manual QA):
  *   - Easing curve precision (visible result is what matters, not numeric path)
  *   - Scroll behavior, fade-mask CSS — that's CSS, not logic
  */

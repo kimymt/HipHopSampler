@@ -6,8 +6,6 @@
 
 Teenage Engineering EP-133 / Akai MPC 風の UI で、Web Audio API ベース。スマートフォン (iPhone / Android) でも、デスクトップでも同じ操作感で使えます。
 
-> 🤖 本プロジェクトの開発には [**gstack**](https://github.com/garrytan/gstack) (Claude Code 用の AI コーディング支援ツールキット) を全面的に活用しました。
-
 ![Hip Hop Sampler スクリーンショット](https://hiphopsampler.pages.dev/pwa-512.png)
 
 ---

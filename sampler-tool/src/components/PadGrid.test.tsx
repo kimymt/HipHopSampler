@@ -17,7 +17,7 @@ import { PadGrid } from './PadGrid';
  *   - Multi-touch with one held + one tapped: only the held pad fires
  *     onPadLongPress; the tapped pad fires onPadClick.
  *
- * What we don't verify (covered by manual /qa on real device):
+ * What we don't verify (covered by manual QA on real device):
  *   - touch event coalescing in the browser
  *   - keyboard activation path (covered by useEffect listener, not these handlers)
  */

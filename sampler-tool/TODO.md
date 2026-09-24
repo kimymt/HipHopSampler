@@ -1,6 +1,6 @@
 # TODO
 
-`/qa` で見つかった deferred 課題、ロードマップから派生した次の検討事項。
+実機 QA で見つかった deferred 課題、ロードマップから派生した次の検討事項。
 
 ---
 
@@ -80,7 +80,7 @@ Phase 1 (ネイティブ Web Audio で 5-6 エフェクト) は別 PR で着手�
 
 完全オフライン、0 latency、全プラットフォーム動作。AI なしでも 80% のユースケースを賄える MVP。
 
-**UI 方針 (2026-05-05 `/design-consultation` で確定 → DESIGN.md §9.15):**
+**UI 方針 (2026-05-05 に確定 → DESIGN.md §9.15):**
 
 - **chip-first**。テキスト入力欄は Phase 2A では **作らない**。
 - EffectPanel 上部に `EffectVibeChips` (横スクロール chip 列) を新設、辞書 30 件のうち**人気 8〜12 件のみ chip として表示**。
@@ -355,9 +355,8 @@ const handleExportClick = async () => {
 2. **`sampler-tool/ROADMAP.md`** — 全体ロードマップ + Phase 完了履歴
 3. **`sampler-tool/DESIGN.md`** — デザインの判断基準 (518行)
 4. **`sampler-tool/DEPLOY.md`** — デプロイ手順、本番URL
-5. **`~/.claude/projects/-Users-likemike-Documents-gstack/memory/sampler_persona.md`** — ペルソナ (DAW挫折者)
-6. **GitHub:** https://github.com/kimymt/HipHopSampler — リポジトリ
+5. **GitHub:** https://github.com/kimymt/HipHopSampler — リポジトリ
 
 ---
 
-最終更新: 2026-05-05 / Phase 2A を chip-first に reframe (`/design-consultation` 結果) / DESIGN.md §9.15 EffectVibeChips 追加
+最終更新: 2026-05-05 / Phase 2A を chip-first に reframe / DESIGN.md §9.15 EffectVibeChips 追加
